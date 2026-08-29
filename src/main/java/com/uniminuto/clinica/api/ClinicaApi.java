@@ -1,6 +1,5 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,30 +21,5 @@ public interface ClinicaApi {
             consumes = {"application/json"})
     ResponseEntity<String> testService()
             throws BadRequestException;
-
-    /**
-     * Metodo test del servicio.
-     *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
-     */
-    @GetMapping(value = "/test2",
-            produces = {"application/text"},
-            consumes = {"application/json"})
-    ResponseEntity<String> testService2()
-            throws BadRequestException;
-
-    /**
-     * Metodo test del servicio.
-     *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
-     */
-    @GetMapping(value = "/test3",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> testService3()
-            throws BadRequestException;
-
 
 }
