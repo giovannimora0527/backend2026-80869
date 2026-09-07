@@ -16,13 +16,15 @@ import java.time.LocalDate;
 public class Cliente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cliente_id") private Long id;
+    @Column(name = "cliente_id")
+    private Long id;
 
     @Column(name = "usuario_id", unique = true)
     private Integer usuarioId;
 
     @Column(name = "tipo_documento", nullable = false, length = 10)
     private String tipoDocumento;
+
     @Column(name = "numero_documento", nullable = false, unique = true, length = 20)
     private String numeroDocumento;
 
