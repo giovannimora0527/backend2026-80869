@@ -3,14 +3,20 @@ package com.uniminuto.clinica.serviceimpl;
 import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Raza;
-import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.MascotaRq;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.RazaRepository;
 import com.uniminuto.clinica.service.MascotaService;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,10 +27,10 @@ public class MascotaServiceImpl implements MascotaService {
     private MascotaRepository mascotaRepository;
 
     @Autowired
-    private ClienteRepository clienteRepository;
+    private RazaRepository razaRepository;
 
     @Autowired
-    private RazaRepository razaRepository;
+    private ClienteRepository clienteRepository;
 
     @Override
     public List<Mascota> listarMascotas() {
@@ -52,43 +58,63 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
     @Override
-    public List<Mascota> buscarMascotasPorCliente(Long clienteId) throws BadRequestException {
-
-        // Validar que cliente id != null
-        if (clienteId == null) {
-            throw new BadRequestException("El ID del cliente no puede ser nulo");
+    public List<Mascota> findByClienteId(Integer clienteId){
+        if (clienteId <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing clientId in parameters");
         }
-
-        Optional<Cliente> optCliente = this.clienteRepository
-                .findById(clienteId);
-
-        if (optCliente.isEmpty()) {
-            throw new BadRequestException("El cliente con ID " + clienteId + " no existe");
-        }
-
-        return this.mascotaRepository
-                .findByClienteOrderByNombreMascotaAsc(optCliente.get());
+        return mascotaRepository.findByCliente_UsuarioId(clienteId);
     }
 
     @Override
-    public List<Mascota> buscarMascotasPorRaza(Integer razaId) throws BadRequestException {
+    public List<Mascota> findByRazaId(Integer razaId){
+        if (razaId <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing clientId in parameters");
+        }
+        return mascotaRepository.findByRaza_RazaId(razaId);
+    }
 
-        // Pasoo 1. Validar que raza id != null
-        if (razaId == null) {
-            throw new BadRequestException("El ID de la raza no puede ser nulo");
+    @Override
+    public MiRespuestaRS crearMascota(MascotaRq mascotaRq) throws BadRequestException
+    {
+        if (!this.validarMascota(mascotaRq))
+        {
+            throw new BadRequestException("Faltan datos");
         }
 
-        // Paso 2. Validar que la raza existe
-        Optional<Raza> optRaza = this.razaRepository
-                .findById(razaId);
-
-        // Valido que la raza existe, si no existe lanzo una excepción
-        if (optRaza.isEmpty()) {
-            throw new BadRequestException("La raza con ID " + razaId + " no existe");
+        Optional<Raza> optRaza = this.razaRepository.findByRazaId(mascotaRq.getRazaId());
+        if (optRaza.isEmpty()){
+            throw new BadRequestException("La raza ingresada no es una raza valida");
         }
 
-        // Paso 3. Buscar las mascotas por raza
-        return this.mascotaRepository
-                .findByRazaOrderByNombreMascotaAsc(optRaza.get());
+        Optional<Cliente> optCliente = this.clienteRepository.findByUsuarioId(mascotaRq.getClienteId());
+        if (optCliente.isEmpty())
+        {
+            throw new BadRequestException("El cliente ingresado no es valido");
+        }
+
+        Mascota mascota = new Mascota();
+        mascota.setNombreMascota(mascotaRq.getNombre());
+        mascota.setEdad(mascotaRq.getEdad());
+        mascota.setRaza(optRaza.get());
+        mascota.setCliente(optCliente.get());
+        mascota.setFechaRegistro(LocalDateTime.now());
+
+        this.mascotaRepository.save(mascota);
+
+        MiRespuestaRS response = new MiRespuestaRS();
+        response.setStatus(200);
+        response.setMessage("La mascota fue ingresada con exito");
+
+        return response;
+    }
+
+    private boolean validarMascota(MascotaRq mascotaRq){
+        if (mascotaRq == null) return false;
+        if (mascotaRq.getNombre() == null || mascotaRq.getNombre() == "") return false;
+        if (mascotaRq.getClienteId() == null || mascotaRq.getClienteId() <= 0) return false;
+        if (mascotaRq.getEdad() <= 0 ) return false;
+        if (mascotaRq.getRazaId() <= 0 ) return false;
+
+        return true;
     }
 }

@@ -1,18 +1,23 @@
 package com.uniminuto.clinica.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-import java.time.LocalDateTime;
 
 @Entity
+@JsonPropertyOrder({
+        "id",
+        "estado",
+        "motivo",
+        "fechaHora",
+        "cliente",
+        "mascota",
+        "medico",
+        "formulas",
+})
 @Table(name = "cita")
 @Data
 public class Cita {
@@ -20,22 +25,34 @@ public class Cita {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private int id;
+
+    @Column(name = "fecha_hora")
+    private LocalDate fechaHora;
+
+    @Column(name = "estado")
+    private String estado;
+
+    @Column(name = "motivo")
+    private String motivo;
 
     @ManyToOne
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
     @ManyToOne
-    @JoinColumn(name = "mascota_id", nullable = false)
+    @JoinColumn(name = "mascota_id")
     private Mascota mascota;
 
     @ManyToOne
-    @JoinColumn(name = "medico_id", nullable = false)
+    @JoinColumn(name = "medico_id")
     private Medico medico;
 
-    @Column(name = "fecha_hora", nullable = false)
-    private LocalDateTime fechaHora;
+    @OneToMany(mappedBy = "cita")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<FormulaMedica> formulas;
 
     @Column(name = "estado", nullable = false, length = 20)
     private String estado;

@@ -1,8 +1,6 @@
 package com.uniminuto.clinica.repository;
 
-import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
-import com.uniminuto.clinica.entity.Raza;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -16,7 +14,7 @@ public interface MascotaRepository extends JpaRepository<Mascota, Integer> {
 
     Mascota findByNombreMascota(String nombreMascota);
 
-    List<Mascota> findByClienteOrderByNombreMascotaAsc(Cliente c);
+    List<Mascota> findByCliente_UsuarioId(Integer clienteId);
 
-    List<Mascota> findByRazaOrderByNombreMascotaAsc(Raza raza);
+    List<Mascota> findByRaza_RazaId(Integer razaId);
 }

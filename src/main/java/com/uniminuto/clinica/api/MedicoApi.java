@@ -1,6 +1,8 @@
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.Medico;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,11 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/cita")
-public interface CitaApi {
+@RequestMapping("/medico")
+public interface MedicoApi {
     @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<List<Cita>> listarCitas()
+            produces = {"application/json"})
+    ResponseEntity<List<Medico>> listarMedicos()
             throws BadRequestException;
 }

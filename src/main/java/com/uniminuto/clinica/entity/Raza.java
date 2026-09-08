@@ -1,11 +1,7 @@
 package com.uniminuto.clinica.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,19 +12,20 @@ import java.time.LocalDateTime;
 public class Raza {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "raza_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer razaId;
 
-    @Column(name = "nombre", nullable = false, length = 100)
+    @Column(name = "nombre")
     private String nombre;
 
-    @Column(name = "especie", nullable = false, length = 100)
+    @Column(name = "especie")
     private String especie;
 
-    @Column(name = "fecha_creacion", nullable = false)
+    @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
+
 }

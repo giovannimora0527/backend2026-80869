@@ -1,39 +1,49 @@
 package com.uniminuto.clinica.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.persistence.*;
 import lombok.Data;
 
+@JsonPropertyOrder({
+        "usuarioId",
+        "nombres",
+        "apellidos",
+        "tipoDocumento",
+        "numeroDocumento",
+        "telefono",
+        "especializacionId",
+        "registroProfesional",
+})
 @Entity
 @Table(name = "medico")
 @Data
 public class Medico {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id") private Long id;
-    @Column(name = "tipo_documento", nullable = false, length = 10)
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private int usuarioId;
+
+    @Column(name = "tipo_documento")
     private String tipoDocumento;
 
-    @Column(name = "numero_documento", nullable = false, unique = true, length = 20)
+    @Column(name = "numero_documento")
     private String numeroDocumento;
 
-    @Column(name = "nombres", nullable = false, length = 100)
+    @Column(name = "nombres")
     private String nombres;
 
-    @Column(name = "apellidos", nullable = false, length = 100)
+    @Column(name = "apellidos")
     private String apellidos;
 
-    @Column(name = "telefono", length = 20)
+    @Column(name = "telefono")
     private String telefono;
 
-    @Column(name = "registro_profesional", nullable = false, unique = true, length = 50)
+    @Column(name = "registro_profesional")
     private String registroProfesional;
 
-    @Column(name = "especializacion_id", nullable = false)
-    private Integer especializacionId;
+    @ManyToOne
+    @JoinColumn(name = "especializacion_id")
+    private Especializacion especializacion;
+
 }
