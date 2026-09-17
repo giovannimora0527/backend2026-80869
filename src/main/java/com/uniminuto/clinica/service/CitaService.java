@@ -27,4 +27,23 @@ public interface CitaService {
      * @throws BadRequestException Si las fechas son nulas o incoherentes.
      */
     List<Cita> filtrarCitasPorFecha(LocalDateTime fechaInicio, LocalDateTime fechaFin) throws BadRequestException;
+
+    /**
+     * Crea una nueva cita en el sistema.
+     *
+     * @param cita Objeto con la información de la cita a registrar.
+     * @return La cita guardada con su ID generado.
+     * @throws BadRequestException Si el objeto enviado es nulo o invalido.
+     */
+    Cita crearCita(Cita cita) throws BadRequestException;
+
+    /**
+     * Actualiza la información de una cita existente dada su clave primaria.
+     *
+     * @param id Identificador único de la cita a actualizar.
+     * @param citaDetalles Objeto con los nuevos datos de la cita.
+     * @return La cita actualizada.
+     * @throws BadRequestException Si el ID no existe o los datos son nulos.
+     */
+    Cita actualizarCita(Long id, Cita citaDetalles) throws BadRequestException;
 }

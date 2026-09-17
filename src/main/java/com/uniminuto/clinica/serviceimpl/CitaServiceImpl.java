@@ -50,4 +50,39 @@ public class CitaServiceImpl implements CitaService {
 
         return citaRepository.findByFechaHoraBetweenOrderByFechaHoraDesc(fechaInicio, fechaFin);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public Cita crearCita(Cita cita) throws BadRequestException {
+        if (cita == null) {
+            throw new BadRequestException("Los datos de la cita no pueden ser nulos.");
+        }
+        return citaRepository.save(cita);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public Cita actualizarCita(Long id, Cita citaDetalles) throws BadRequestException {
+        if (id == null) {
+            throw new BadRequestException("El ID de la cita es obligatorio.");
+        }
+        if (citaDetalles == null) {
+            throw new BadRequestException("Los datos para actualizar no pueden ser nulos.");
+        }
+
+        Cita citaExistente = citaRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("No se encontro ninguna cita con el ID: " + id));
+
+        citaExistente.setFechaHora(citaDetalles.getFechaHora());
+        citaExistente.setMotivo(citaDetalles.getMotivo());
+        citaExistente.setEstado(citaDetalles.getEstado());
+
+        return citaRepository.save(citaExistente);
+    }
 }
