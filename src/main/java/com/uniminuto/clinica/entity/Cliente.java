@@ -3,7 +3,7 @@ package com.uniminuto.clinica.entity;
 import lombok.Data;
 
 import java.time.LocalDate;
-
+import jakarta.persistence.*;
 @Entity
 @Table(name = "cliente")
 @Data

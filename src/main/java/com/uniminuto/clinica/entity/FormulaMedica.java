@@ -7,6 +7,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad que representa una fórmula médica.
+ */
 @Entity
 @JsonPropertyOrder({
         "id",

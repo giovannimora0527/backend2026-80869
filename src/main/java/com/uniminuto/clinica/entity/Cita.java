@@ -6,6 +6,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 
 @Entity
 @JsonPropertyOrder({
@@ -25,11 +28,10 @@ public class Cita {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
     @Column(name = "fecha_hora")
-    private LocalDate fechaHora;
+    private LocalDateTime fechaHora;
 
     @Column(name = "estado")
     private String estado;
@@ -54,9 +56,4 @@ public class Cita {
     @EqualsAndHashCode.Exclude
     private List<FormulaMedica> formulas;
 
-    @Column(name = "estado", nullable = false, length = 20)
-    private String estado;
-
-    @Column(name = "motivo", columnDefinition = "TEXT")
-    private String motivo;
 }

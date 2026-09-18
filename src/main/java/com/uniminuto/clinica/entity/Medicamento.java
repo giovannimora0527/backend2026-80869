@@ -1,12 +1,13 @@
 package com.uniminuto.clinica.entity;
-
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad que representa un medicamento en el inventario.
+ */
 @Entity
 @Table(name = "medicamento")
 @Data
@@ -15,7 +16,7 @@ public class Medicamento {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int medicamentoId;
+    private Integer medicamentoId;
 
     @Column(name = "nombre")
     private String nombre;

@@ -17,7 +17,7 @@ public class MedicoApiController implements MedicoApi {
     private MedicoService medicoService;
 
     @Override
-    public ResponseEntity<List<Medico>> listarMedicos() throws BadRequestException {
-        return ResponseEntity.ok(medicoService.listarMedicos());
+    public ResponseEntity<List<Medico>> listarMedicosConEspecializaciones() throws BadRequestException {
+        return ResponseEntity.ok(medicoService.listarMedicosConEspecializaciones());
     }
 }

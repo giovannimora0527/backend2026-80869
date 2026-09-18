@@ -14,6 +14,9 @@ import lombok.Data;
         "especializacionId",
         "registroProfesional",
 })
+/**
+ * Entidad que representa a un medico del sistema.
+ */
 @Entity
 @Table(name = "medico")
 @Data
