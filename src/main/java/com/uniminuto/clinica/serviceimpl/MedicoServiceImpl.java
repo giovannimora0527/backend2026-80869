@@ -11,6 +11,7 @@ import java.util.List;
 
 /**
  * Implementacion de los servicios de negocio para la entidad Medico.
+ * Incluye la logica para listar medicos con sus especializaciones.
  */
 @Service
 public class MedicoServiceImpl implements MedicoService {
@@ -23,11 +24,12 @@ public class MedicoServiceImpl implements MedicoService {
 
     /**
      * {@inheritDoc}
-     * Gracias a FetchType.EAGER en la entidad Medico, las especializaciones
-     * se cargan automaticamente al ejecutar findAll().
+     * Gracias a FetchType.EAGER en la entidad Medico,
+     * las especializaciones se cargan automaticamente al ejecutar findAll().
      */
     @Override
     @Transactional(readOnly = true)
     public List<Medico> listarMedicosConEspecializaciones() throws BadRequestException {
         return medicoRepository.findAll();
     }
+}
