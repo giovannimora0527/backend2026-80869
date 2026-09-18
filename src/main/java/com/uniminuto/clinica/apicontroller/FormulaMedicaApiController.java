@@ -14,42 +14,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
-/**
- * Controlador que implementa los endpoints de {@link FormulaMedicaApi}.
- * Delega la logica de negocio a la capa de servicio.
- *
- * ¿Qué significa @RestController?
- * - Combina @Controller y @ResponseBody
- * - Le dice a Spring: "Esta clase es un controlador web"
- * - Spring automáticamente convierte los objetos a JSON
- * - No necesitas poner @ResponseBody en cada método
- */
+
 @RestController
 public class FormulaMedicaApiController implements FormulaMedicaApi {
 
-    /**
-     * Servicio de formulas medicas inyectado.
-     *
-     * ¿Por qué usamos 'private final' en lugar de solo @Autowired?
-     * - 'final' garantiza que el servicio nunca sea null
-     * - Facilita el testing (puedes pasar un mock en el constructor)
-     * - Es una buena práctica de inmutabilidad
-     */
+
     @Autowired
     private FormulaMedicaService formulaMedicaService;
 
     /**
      * {@inheritDoc}
      *
-     * ¿Qué hace este método?
-     * - Recibe una petición GET a /api/formulas-medicas
-     * - Delega la consulta al servicio (capa de negocio)
-     * - Devuelve ResponseEntity.ok() con la lista (HTTP 200 OK)
-     *
-     * ¿Por qué no devolvemos List<FormulaMedica> directamente?
-     * - Porque ResponseEntity nos da control total sobre la respuesta
-     * - Podemos cambiar el status code si es necesario (404, 500, etc.)
-     * - Podemos agregar headers personalizados si lo necesitamos
+
      */
     @Override
     public ResponseEntity<List<FormulaMedica>> obtenerTodasOrdenadas() {
