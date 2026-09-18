@@ -9,6 +9,4 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface MedicoRepository extends JpaRepository<Medico, Long> {
-    // No necesitamos métodos personalizados porque findAll() ya trae las especializaciones
-    // gracias a FetchType.EAGER en la entidad Medico
 }

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Controlador REST que implementa los endpoints definidos en {@link AnotacionHistoriaApi}.
+ * Controlador REST que implementa los endpoints de AnotacionHistoriaApi.
  * Delega la logica de negocio a la capa de servicio.
  */
 @RestController
@@ -32,7 +32,6 @@ public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
     @Override
     public ResponseEntity<AnotacionHistoria> crearAnotacion(@RequestBody AnotacionHistoria anotacion) throws BadRequestException {
         AnotacionHistoria anotacionCreada = this.anotacionService.crearAnotacion(anotacion);
-        // Retornamos 201 Created porque se creó un nuevo recurso
         return ResponseEntity.status(HttpStatus.CREATED).body(anotacionCreada);
     }
 
@@ -50,7 +49,6 @@ public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
     @Override
     public ResponseEntity<AnotacionHistoria> actualizarAnotacion(@PathVariable Long id, @RequestBody AnotacionHistoria anotacion) throws BadRequestException {
         AnotacionHistoria anotacionActualizada = this.anotacionService.actualizarAnotacion(id, anotacion);
-        // Retornamos 200 OK porque solo modificamos un recurso existente
         return ResponseEntity.ok(anotacionActualizada);
     }
 }

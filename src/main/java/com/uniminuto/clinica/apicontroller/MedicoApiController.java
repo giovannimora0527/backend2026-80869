@@ -10,21 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Controlador REST que implementa los endpoints definidos en {@link MedicoApi}.
- * Delega la logica de negocio a la capa de servicio.
+ * Controlador REST que implementa los endpoints de MedicoApi.
  */
 @RestController
 public class MedicoApiController implements MedicoApi {
 
-    /**
-     * Servicio de medicos inyectado.
-     */
     @Autowired
     private MedicoService medicoService;
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public ResponseEntity<List<Medico>> listarMedicosConEspecializaciones() throws BadRequestException {
         return ResponseEntity.ok(this.medicoService.listarMedicosConEspecializaciones());

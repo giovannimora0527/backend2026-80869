@@ -5,39 +5,26 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
-import java.util.List;
+import java.time.LocalDateTime;
 
 /**
- * Entidad que representa la historia medica de una mascota.
- * Contiene una lista de anotaciones relacionadas.
+ * Entidad que representa la historia medica de un paciente.
  */
 @Entity
 @Table(name = "historia_medica")
 @Data
 public class HistoriaMedica {
 
-    /**
-     * Identificador unico de la historia medica.
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    /**
-     * Descripcion de la historia medica.
-     */
-    @Column(name = "descripcion", columnDefinition = "TEXT")
-    private String descripcion;
+    @Column(name = "paciente_id", nullable = false)
+    private Integer pacienteId;
 
-    /**
-     * Lista de anotaciones asociadas a esta historia medica.
-     * CascadeType.ALL permite que al guardar/actualizar/eliminar la historia,
-     * se aplique la misma operacion a sus anotaciones.
-     */
-    @OneToMany(mappedBy = "historiaMedica", cascade = jakarta.persistence.CascadeType.ALL)
-    private List<AnotacionHistoria> anotaciones;
+    @Column(name = "fecha_creacion")
+    private LocalDateTime fechaCreacion;
 }

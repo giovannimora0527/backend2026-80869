@@ -38,7 +38,9 @@ public class CitaApiController implements CitaApi {
      * {@inheritDoc}
      */
     @Override
-    public ResponseEntity<List<Cita>> filtrarCitasPorFecha(LocalDateTime fechaInicio, LocalDateTime fechaFin) throws BadRequestException {
+    public ResponseEntity<List<Cita>> filtrarCitasPorFecha(
+            LocalDateTime fechaInicio,
+            LocalDateTime fechaFin) throws BadRequestException {
         return ResponseEntity.ok(this.citaService.filtrarCitasPorFecha(fechaInicio, fechaFin));
     }
 
@@ -47,18 +49,16 @@ public class CitaApiController implements CitaApi {
      */
     @Override
     public ResponseEntity<Cita> crearCita(@RequestBody Cita cita) throws BadRequestException {
-        Cita citaCreada = this.citaService.crearCita(cita);
-        // Retornamos 201 Created porque se creó un nuevo recurso
-        return ResponseEntity.status(HttpStatus.CREATED).body(citaCreada);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.citaService.crearCita(cita));
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ResponseEntity<Cita> actualizarCita(@PathVariable Long id, @RequestBody Cita cita) throws BadRequestException {
-        Cita citaActualizada = this.citaService.actualizarCita(id, cita);
-        // Retornamos 200 OK porque solo modificamos un recurso existente
-        return ResponseEntity.ok(citaActualizada);
+    public ResponseEntity<Cita> actualizarCita(
+            @PathVariable Long id,
+            @RequestBody Cita cita) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.actualizarCita(id, cita));
     }
 }

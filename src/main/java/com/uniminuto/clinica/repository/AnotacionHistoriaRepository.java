@@ -14,10 +14,6 @@ public interface AnotacionHistoriaRepository extends JpaRepository<AnotacionHist
 
     /**
      * Consulta las anotaciones dentro de un rango de fechas ordenadas descendentemente.
-     *
-     * @param fechaInicio Fecha y hora inicial del rango.
-     * @param fechaFin    Fecha y hora final del rango.
-     * @return Lista de anotaciones dentro del rango ordenadas de la mas reciente a la mas antigua.
      */
     List<AnotacionHistoria> findByFechaBetweenOrderByFechaDesc(LocalDateTime fechaInicio, LocalDateTime fechaFin);
 }

@@ -11,9 +11,6 @@ public interface MedicoService {
 
     /**
      * Lista todos los medicos con sus especializaciones.
-     *
-     * @return Lista de medicos con sus especializaciones cargadas.
-     * @throws BadRequestException Si ocurre un error de negocio.
      */
     List<Medico> listarMedicosConEspecializaciones() throws BadRequestException;
 }

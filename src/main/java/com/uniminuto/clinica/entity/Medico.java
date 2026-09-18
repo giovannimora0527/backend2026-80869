@@ -7,15 +7,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
-import java.util.Set;
 
 /**
  * Entidad que representa un medico de la clinica veterinaria.
- * Un medico puede tener multiples especializaciones.
+ * Un medico tiene una especializacion asociada.
  */
 @Entity
 @Table(name = "medico")
@@ -67,15 +65,10 @@ public class Medico {
     private String registroProfesional;
 
     /**
-     * Conjunto de especializaciones del medico.
-     * FetchType.EAGER asegura que las especializaciones se carguen automaticamente al consultar el medico.
-     * @JoinTable define la tabla intermedia que relaciona medicos con especializaciones.
+     * Especializacion del medico.
+     * FetchType.EAGER asegura que la especializacion se cargue automaticamente al consultar el medico.
      */
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "medico_especializacion",
-            joinColumns = @JoinColumn(name = "medico_id"),
-            inverseJoinColumns = @JoinColumn(name = "especializacion_id")
-    )
-    private Set<Especializacion> especializaciones;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "especializacion_id", nullable = false)
+    private Especializacion especializacion;
 }
