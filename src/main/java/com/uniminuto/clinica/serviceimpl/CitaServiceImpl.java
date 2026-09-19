@@ -63,6 +63,10 @@ public class CitaServiceImpl implements CitaService {
         Mascota mascota = mascotaRepository.findById(citaRequest.getMascotaId())
                 .orElseThrow(() -> new BadRequestException("Not exist a pet with id " + citaRequest.getMascotaId()));
 
+        if (mascota.getCliente() == null || !mascota.getCliente().getUsuarioId().equals(cliente.getUsuarioId())) {
+            throw new BadRequestException("The pet with id " + mascota.getMascotaId() + " does not belong to the client with id " + cliente.getUsuarioId());
+        }
+
         Medico medico = medicoRepository.findById(citaRequest.getMedicoId())
                 .orElseThrow(() -> new BadRequestException("Not exist a doctor with id " + citaRequest.getMedicoId()));
 
@@ -94,6 +98,10 @@ public class CitaServiceImpl implements CitaService {
 
         Mascota mascota = mascotaRepository.findById(citaRequest.getMascotaId())
                 .orElseThrow(() -> new BadRequestException("Not exist a pet with id " + citaRequest.getMascotaId()));
+
+        if (mascota.getCliente() == null || !mascota.getCliente().getUsuarioId().equals(cliente.getUsuarioId())) {
+            throw new BadRequestException("The pet with id " + mascota.getMascotaId() + " does not belong to the client with id " + cliente.getUsuarioId());
+        }
 
         Medico medico = medicoRepository.findById(citaRequest.getMedicoId())
                 .orElseThrow(() -> new BadRequestException("Not exist a doctor with id " + citaRequest.getMedicoId()));
