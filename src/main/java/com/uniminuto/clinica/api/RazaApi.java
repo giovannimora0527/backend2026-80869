@@ -14,16 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/raza")
 public interface RazaApi {
 
-    /**
-     * Metodo test del servicio.
-     *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
-     */
+
     @PostMapping(value = "/guardar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> guardarRaza(
             @RequestBody RazaRq razaRq)
             throws BadRequestException;
+
 }
