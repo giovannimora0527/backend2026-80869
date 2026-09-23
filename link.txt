@@ -1,0 +1,39 @@
+INICIAR SERVIDOR .\mvnw spring-boot:run
+
+VISUALIZAR INFORMES 
+http://localhost:8080/api/historias-medicas
+
+1. Listar Fórmulas Médicas:Cumplido. Creado en GET /api/formulas-medicas y ordenado de la más reciente a la más antigua con 
+findAllByOrderByFechaCreacionDesc().  
+
+2. Filtrar Citas por Fecha:Cumplido. Creado en GET /api/citas/filtrar?inicio=2026-01-01&fin=2026-12-31 ordenando descendentemente por fecha.  
+
+3. CRUD Citas (Crear y Actualizar):Cumplido. 
+Creados los endpoints POST /api/citas 
+{
+  "fechaHora": "2026-09-20T10:00:00",
+  "motivo": "Chequeo general",
+  "paciente": "Firulais"
+}
+
+para adicionar y PUT /api/citas/{id} para actualizar.
+{
+  "fechaHora": "2026-09-25T15:30:00",
+  "motivo": "Control post-operatorio modificado",
+  "paciente": "Firulais"
+}
+
+4. CRUD Anotación Historia y Filtro por Fecha:Cumplido. Se implementó la relación con HistoriaMedica y se crearon los endpoints:  
+POST /api/anotaciones-historia?historiaId={id} (Crear)  
+{
+  "observacion": "Mascota presenta excelente evolución médica."
+}
+
+PUT /api/anotaciones-historia/{id} (Actualizar)  
+{
+  "observacion": "El paciente muestra mejoría notable en la revisión médica."
+}
+
+GET /api/anotaciones-historia?inicio=2026-01-01&fin=2026-12-31 (Listar/Filtrar ordenado por fecha)  
+
+5. Listar Médicos con Especializaciones:Cumplido. Creado en GET /api/medicos devolviendo la entidad Medico con su lista de especialidades
