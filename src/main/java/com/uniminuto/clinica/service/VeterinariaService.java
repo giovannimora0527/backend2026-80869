@@ -1,4 +1,4 @@
-package com.veterinaria.servicio;
+package com.veterinaria.service;
 
 import com.veterinaria.modelo.*;
 import com.veterinaria.repositorio.*;
