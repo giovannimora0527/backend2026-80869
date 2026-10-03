@@ -96,7 +96,6 @@ public class CitaServiceImpl implements CitaService {
         citaActualizar.setEstado(citaRq.getEstado());
         citaRepository.save(citaActualizar);
 
-
         MiRespuestaRS rta = new MiRespuestaRS();
         rta.setMessage("Se agendo una nueva cita para la mascota "
                 + mascotaOptional.get().getNombreMascota() + " con el médico " + medicoOptional.get().getNombres() + " "
@@ -118,9 +117,8 @@ public class CitaServiceImpl implements CitaService {
             throw new BadRequestException("El médico no existe");
         }
 
-        // findByMascotaIdAndMedicoId
-        Optional<Cita> citaOptional = citaRepository
-                .findByMascotaAndMedico(mascotaOptional.get(), medicoOptional.get());
+        Optional<Cita> citaOptional = citaRepository.findByMascotaAndMedico(mascotaOptional.get(), medicoOptional.get());
+
         if (citaOptional.isPresent()) {
             // Valido las fechas de la cita para darle un tiempo de 30 minutos para que no se solapen las citas
             Cita cita = citaOptional.get();
