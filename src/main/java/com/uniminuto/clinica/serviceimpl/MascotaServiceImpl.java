@@ -20,6 +20,9 @@ import java.util.Optional;
 @Service
 public class MascotaServiceImpl implements MascotaService {
 
+    /**
+     * Inyección de dependencias del repositorio de mascotas
+     */
     @Autowired
     private MascotaRepository mascotaRepository;
 

@@ -93,6 +93,7 @@ public class CitaServiceImpl implements CitaService {
         citaActualizar.setMascota(mascotaOptional.get());
         citaActualizar.setFechaHora(citaRq.getFechaHora());
         citaActualizar.setMotivo(citaRq.getMotivo());
+        citaActualizar.setEstado(citaRq.getEstado());
         citaRepository.save(citaActualizar);
 
 
@@ -118,13 +119,14 @@ public class CitaServiceImpl implements CitaService {
         }
 
         // findByMascotaIdAndMedicoId
-        Optional<Cita> citaOptional = citaRepository.findByMascotaAndMedico(mascotaOptional.get(), medicoOptional.get());
+        Optional<Cita> citaOptional = citaRepository
+                .findByMascotaAndMedico(mascotaOptional.get(), medicoOptional.get());
         if (citaOptional.isPresent()) {
             // Valido las fechas de la cita para darle un tiempo de 30 minutos para que no se solapen las citas
             Cita cita = citaOptional.get();
             LocalDateTime fechaHoraCita = cita.getFechaHora();
-            LocalDateTime fechaHoraCitaMas30Min = fechaHoraCita.plusMinutes(30);
-            LocalDateTime fechaHoraCitaMenos30Min = fechaHoraCita.minusMinutes(30);
+            LocalDateTime fechaHoraCitaMas30Min = fechaHoraCita.plusMinutes(15);
+            LocalDateTime fechaHoraCitaMenos30Min = fechaHoraCita.minusMinutes(15);
             if (citaRq.getFechaHora().isAfter(fechaHoraCitaMenos30Min)
                     && citaRq.getFechaHora().isBefore(fechaHoraCitaMas30Min)
                     && cita.getEstado().equals(ESTADO_PROGRAMADA)) {
@@ -132,10 +134,19 @@ public class CitaServiceImpl implements CitaService {
             }
         }
 
+        List<Cita> citas = citaRepository
+                .findByMedicoAndFechaHoraBetween(medicoOptional.get(),
+                        citaRq.getFechaHora().minusMinutes(15),
+                        citaRq.getFechaHora().plusMinutes(15));
+        if (!citas.isEmpty()) {
+            throw new BadRequestException("El médico ya tiene una cita programada en ese rango de hora.");
+        }
+
         Mascota mascota = mascotaOptional.get();
         Medico medico = medicoOptional.get();
         Cita nuevaCita = new Cita();
         nuevaCita.setFechaHora(citaRq.getFechaHora());
+        nuevaCita.setCliente(mascota.getCliente());
         nuevaCita.setMascota(mascota);
         nuevaCita.setMedico(medico);
         nuevaCita.setMotivo(citaRq.getMotivo());
@@ -151,8 +162,12 @@ public class CitaServiceImpl implements CitaService {
     }
 
     private boolean sePuedeAgendarCitaXFecha(Cita cita) {
-
-        return true;
+        LocalDateTime fechaHoraCita = cita.getFechaHora();
+        LocalDateTime fechaHoraCitaMas30Min = fechaHoraCita.plusMinutes(15);
+        LocalDateTime fechaHoraCitaMenos30Min = fechaHoraCita.minusMinutes(15);
+        return !cita.getFechaHora().isAfter(fechaHoraCitaMenos30Min)
+                || !cita.getFechaHora().isBefore(fechaHoraCitaMas30Min)
+                || !cita.getEstado().equals(ESTADO_PROGRAMADA);
     }
 
     private void validarCita(CitaRq citaRq) throws BadRequestException {

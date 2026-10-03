@@ -18,4 +18,5 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     Optional<Cita> findByMascotaAndMedico(Mascota mascota, Medico medico);
 
     List<Cita> findByMedicoAndFechaHoraBetween(Medico medico, LocalDateTime fechaInicio, LocalDateTime fechaFin);
+
 }

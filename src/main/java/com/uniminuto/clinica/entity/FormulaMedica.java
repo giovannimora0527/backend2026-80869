@@ -14,8 +14,9 @@ public class FormulaMedica {
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    @Column(name = "cita_id", nullable = false)
-    private Integer citaId;
+    @ManyToOne
+    @JoinColumn(name = "cita_id", nullable = false)
+    private Cita cita;
 
     @ManyToOne
     @JoinColumn(name = "medicamento_id", nullable = false)

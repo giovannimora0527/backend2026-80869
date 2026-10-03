@@ -12,4 +12,5 @@ public class CitaRq {
     private Long medicoId;
     private LocalDateTime fechaHora;
     private String motivo;
+    private String estado;
 }
