@@ -3,12 +3,14 @@ package com.uniminuto.clinica.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "formula_medica")
 @Data
 public class FormulaMedica {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
@@ -27,6 +29,15 @@ public class FormulaMedica {
 
     @Column(name = "indicaciones", columnDefinition = "TEXT")
     private String indicaciones;
+
+    @Column(name = "fecha_emision")
+    private LocalDate fechaEmision;
+
+    @Column(name = "frecuencia", length = 100)
+    private String frecuencia;
+
+    @Column(name = "duracion_tratamiento", length = 100)
+    private String duracionTratamiento;
 
     @Column(name = "fecha_creacion_registro", nullable = false)
     private LocalDateTime fechaCreacionRegistro;
