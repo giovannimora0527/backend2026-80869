@@ -10,65 +10,59 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Interfaz que define los endpoints REST para la gestión y agendamiento de Citas Médicas.
+ *
+ * @author Yulian Estefanía Montealegre
+ */
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/cita")
 public interface CitaApi {
 
     /**
-     * Metodo test del servicio.
+     * Lista todas las citas médicas registradas en el sistema.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @return Lista de entidades Cita.
+     * @throws BadRequestException Si ocurre un error en la petición.
      */
-    @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<List<Cita>> listarCitas()
-            throws BadRequestException;
-
+    @GetMapping(value = "/listar", produces = "application/json")
+    ResponseEntity<List<Cita>> listarCitas() throws BadRequestException;
 
     /**
-     * Metodo test del servicio.
+     * Lista las citas médicas comprendidas dentro de un rango de fechas.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param fechaInicio Fecha y hora inicial del filtro.
+     * @param fechaFin Fecha y hora final del filtro.
+     * @return Lista de citas dentro del rango.
+     * @throws BadRequestException Si los parámetros de fecha son incorrectos.
      */
-    @GetMapping(value = "/listar-rango",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+    @GetMapping(value = "/listar-rango", produces = "application/json")
     ResponseEntity<List<Cita>> listarCitasRango(
             @RequestParam LocalDateTime fechaInicio,
             @RequestParam LocalDateTime fechaFin
-    )
-            throws BadRequestException;
-
+    ) throws BadRequestException;
 
     /**
-     * Metodo test del servicio.
+     * Crea una nueva cita médica.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param cita Objeto DTO con los datos de la nueva cita.
+     * @return Respuesta estandarizada con el resultado del registro.
+     * @throws BadRequestException Si los datos obligatorios no son válidos.
      */
-    @PostMapping(value = "/crear",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+    @PostMapping(value = "/crear", produces = "application/json", consumes = "application/json")
     ResponseEntity<MiRespuestaRS> crearCita(
             @RequestBody CitaRq cita
-    )
-            throws BadRequestException;
-
+    ) throws BadRequestException;
 
     /**
-     * Metodo test del servicio.
+     * Actualiza una cita médica existente.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param cita Objeto DTO con los datos actualizados.
+     * @return Respuesta estandarizada con el resultado de la actualización.
+     * @throws BadRequestException Si ocurre un error de validación.
      */
-    @PostMapping(value = "/actualizar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+    @PostMapping(value = "/actualizar", produces = "application/json", consumes = "application/json")
     ResponseEntity<MiRespuestaRS> actualizarCita(
             @RequestBody CitaRq cita
-    )
-            throws BadRequestException;
+    ) throws BadRequestException;
 }

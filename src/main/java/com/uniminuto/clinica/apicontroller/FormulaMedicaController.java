@@ -1,6 +1,9 @@
 package com.uniminuto.clinica.apicontroller;
 
+import com.uniminuto.clinica.api.FormulaMedicaApi;
 import com.uniminuto.clinica.entity.FormulaMedica;
+import com.uniminuto.clinica.models.FormulaMedicaRq;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.FormulaMedicaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,44 +12,32 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Controlador REST para gestionar fórmulas médicas.
- * @author Yulian Montealegre
+ * Controlador REST para manejar peticiones HTTP de Fórmulas Médicas.
+ *
+ * @author Yulian Estefanía Montealegre
  */
 @RestController
-@RequestMapping("/api/formulas-medicas")
-// Aquí agregamos los permisos completos de CORS que faltaban
-@CrossOrigin(origins = "http://localhost:4200", allowedHeaders = "*", allowCredentials = "true")
-public class FormulaMedicaController {
+@RequestMapping("/formulas")
+public class FormulaMedicaController implements FormulaMedicaApi {
 
     @Autowired
     private FormulaMedicaService formulaMedicaService;
 
-    /**
-     * Obtiene todas las fórmulas médicas.
-     */
     @GetMapping
-    public ResponseEntity<List<FormulaMedica>> obtenerFormulas() {
-        List<FormulaMedica> formulas = formulaMedicaService.obtenerTodas();
-        return ResponseEntity.ok(formulas);
+    @Override
+    public ResponseEntity<List<FormulaMedica>> listarFormulas() {
+        return ResponseEntity.ok(formulaMedicaService.obtenerTodas());
     }
 
-    /**
-     * Crea una nueva fórmula médica.
-     */
-    @PostMapping("/crear")
-    public ResponseEntity<FormulaMedica> crearFormula(@RequestBody FormulaMedica formula) {
-        FormulaMedica nueva = formulaMedicaService.crear(formula);
-        return ResponseEntity.ok(nueva);
+    @PostMapping
+    @Override
+    public ResponseEntity<MiRespuestaRS> guardarFormula(@RequestBody FormulaMedicaRq request) {
+        return ResponseEntity.ok(formulaMedicaService.crearFormula(request));
     }
 
-    /**
-     * Actualiza una fórmula médica existente.
-     */
-    @PutMapping("/actualizar/{id}")
-    public ResponseEntity<FormulaMedica> actualizarFormula(
-            @PathVariable Long id,
-            @RequestBody FormulaMedica formula) {
-        FormulaMedica actualizada = formulaMedicaService.actualizar(id, formula);
-        return ResponseEntity.ok(actualizada);
+    @PutMapping("/{id}")
+    @Override
+    public ResponseEntity<MiRespuestaRS> actualizarFormula(@PathVariable Long id, @RequestBody FormulaMedicaRq request) {
+        return ResponseEntity.ok(formulaMedicaService.actualizarFormula(id, request));
     }
 }
