@@ -1,3 +1,4 @@
+
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.AnotacionHistoria;
@@ -16,10 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
-public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
+public class AnotacionHistoriaServiceImpl
+        implements AnotacionHistoriaService {
 
     @Autowired
     private HistoriaMedicaRepository historiaMedicaRepository;
@@ -33,60 +34,94 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
     @Autowired
     private MedicoRepository medicoRepository;
 
+    @Override
+    public MiRespuestaRS crearAnotacionHistoria(
+            AnotacionHistoriaRq rq) {
 
+        validarAnotacionHistoria(rq);
+
+        Mascota mascota = mascotaRepository.findById(rq.getMascotaId())
+                .orElseThrow(() -> new BadRequestException(
+                        "La mascota indicada no existe."));
+
+        HistoriaMedica historia = historiaMedicaRepository
+                .findById(rq.getHistoriaId())
+                .orElseThrow(() -> new BadRequestException(
+                        "La historia clínica indicada no existe."));
+
+        if (historia.getMascota() == null
+                || !historia.getMascota().getMascotaId()
+                .equals(mascota.getMascotaId())) {
+            throw new BadRequestException(
+                    "La historia clínica no corresponde a la mascota indicada.");
+        }
+
+        Medico medico = medicoRepository.findById(rq.getMedicoId())
+                .orElseThrow(() -> new BadRequestException(
+                        "El médico indicado no existe."));
+
+        AnotacionHistoria anotacion = new AnotacionHistoria();
+        anotacion.setHistoria(historia);
+        anotacion.setMedico(medico);
+        anotacion.setDescripcion(rq.getDescripcion().trim());
+        anotacion.setFecha(LocalDateTime.now());
+
+        anotacionHistoriaRepository.save(anotacion);
+
+        MiRespuestaRS respuesta = new MiRespuestaRS();
+        respuesta.setStatus(200);
+        respuesta.setMessage(
+                "Anotación de historia clínica creada exitosamente");
+
+        return respuesta;
+    }
+
+    private void validarAnotacionHistoria(
+            AnotacionHistoriaRq rq) {
+
+        if (rq == null) {
+            throw new BadRequestException(
+                    "La información de la anotación es obligatoria.");
+        }
+
+        if (rq.getMascotaId() == null) {
+            throw new BadRequestException(
+                    "El ID de la mascota es obligatorio.");
+        }
+
+        if (rq.getHistoriaId() == null) {
+            throw new BadRequestException(
+                    "El ID de la historia clínica es obligatorio.");
+        }
+
+        if (rq.getMedicoId() == null) {
+            throw new BadRequestException(
+                    "El ID del médico es obligatorio.");
+        }
+
+        if (rq.getDescripcion() == null
+                || rq.getDescripcion().trim().isEmpty()) {
+            throw new BadRequestException(
+                    "La descripción de la anotación es obligatoria.");
+        }
+    }
 
     @Override
-    public MiRespuestaRS crearAnotacionHistoria(AnotacionHistoriaRq anotacionHistoriaRq) {
-        this.validarAnotacionHistoria(anotacionHistoriaRq);
-        Optional<Mascota> optMascota = this.mascotaRepository.findById(anotacionHistoriaRq.getMascotaId());
-        if (optMascota.isEmpty()) {
-            throw new BadRequestException("La mascota con ID " + anotacionHistoriaRq.getMascotaId()  +
-                    " no existe. Por favor consulte al administrador del sistema o registre a la mascota antes de " +
-                    "crear la anotación de historia clínica.");
+    public java.util.List<AnotacionHistoria> listarPorHistoria(
+            Long historiaId) {
+
+        if (historiaId == null) {
+            throw new BadRequestException(
+                    "El ID de la historia clínica es obligatorio.");
         }
 
-        HistoriaMedica historia = new HistoriaMedica();
-        AnotacionHistoria nuevaAnotacion = new AnotacionHistoria();
+        HistoriaMedica historia = historiaMedicaRepository
+                .findById(historiaId)
+                .orElseThrow(() -> new BadRequestException(
+                        "La historia clínica indicada no existe."));
 
-        Optional<HistoriaMedica> historiaOpt = this.historiaMedicaRepository
-                .findByMascota(optMascota.get());
-        boolean existeHistoria = historiaOpt.isPresent();
-        if (historiaOpt.isEmpty()) {
-           HistoriaMedica nueva = new HistoriaMedica();
-           nueva.setMascota(optMascota.get());
-           nueva.setFechaCreacion(LocalDateTime.now());
-           historia = this.historiaMedicaRepository.save(nueva);
-        }
-
-        Optional<Medico> medicoOptional = this.medicoRepository.findById(anotacionHistoriaRq.getMedicoId());
-        if (medicoOptional.isEmpty()) {
-            throw new BadRequestException("El médico con ID " + anotacionHistoriaRq.getMedicoId() + " no existe");
-        }
-        nuevaAnotacion.setDescripcion(anotacionHistoriaRq.getDescripcion());
-        nuevaAnotacion.setHistoria(existeHistoria? historiaOpt.get() : historia);
-        nuevaAnotacion.setDescripcion(anotacionHistoriaRq.getDescripcion());
-        nuevaAnotacion.setMedico(medicoOptional.get());
-        nuevaAnotacion.setFecha(LocalDateTime.now());
-        this.anotacionHistoriaRepository.save(nuevaAnotacion);
-
-        MiRespuestaRS rta = new MiRespuestaRS();
-        rta.setStatus(200);
-        rta.setMessage("Anotación de historia clínica creada exitosamente");
-        return rta;
+        return anotacionHistoriaRepository
+                .findByHistoriaOrderByFechaDesc(historia);
     }
 
-    private void validarAnotacionHistoria(AnotacionHistoriaRq anotacionHistoriaRq) throws BadRequestException {
-        if (anotacionHistoriaRq == null) {
-            throw new BadRequestException("La anotación de historia clínica es obligatoria");
-        }
-        if (anotacionHistoriaRq.getMascotaId() == null) {
-            throw new BadRequestException("El ID de la mascota es obligatorio");
-        }
-        if (anotacionHistoriaRq.getMedicoId() == null) {
-            throw new BadRequestException("El ID del médico es obligatorio");
-        }
-        if (anotacionHistoriaRq.getDescripcion() == null || anotacionHistoriaRq.getDescripcion().isEmpty()) {
-            throw new BadRequestException("La descripción de la anotación es obligatoria");
-        }
-    }
 }

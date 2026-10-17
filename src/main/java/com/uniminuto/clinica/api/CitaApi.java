@@ -1,3 +1,4 @@
+
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.Cita;
@@ -14,61 +15,38 @@ import java.util.List;
 @RequestMapping("/cita")
 public interface CitaApi {
 
-    /**
-     * Metodo test del servicio.
-     *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
-     */
-    @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+    @GetMapping(
+            value = "/listar",
+            produces = {"application/json"}
+    )
     ResponseEntity<List<Cita>> listarCitas()
             throws BadRequestException;
 
-
-    /**
-     * Metodo test del servicio.
-     *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
-     */
-    @GetMapping(value = "/listar-rango",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+    @GetMapping(
+            value = "/listar-rango",
+            produces = {"application/json"}
+    )
     ResponseEntity<List<Cita>> listarCitasRango(
             @RequestParam LocalDateTime fechaInicio,
             @RequestParam LocalDateTime fechaFin
-    )
-            throws BadRequestException;
+    ) throws BadRequestException;
 
-
-    /**
-     * Metodo test del servicio.
-     *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
-     */
-    @PostMapping(value = "/crear",
+    @PostMapping(
+            value = "/crear",
             produces = {"application/json"},
-            consumes = {"application/json"})
+            consumes = {"application/json"}
+    )
     ResponseEntity<MiRespuestaRS> crearCita(
             @RequestBody CitaRq cita
-    )
-            throws BadRequestException;
+    ) throws BadRequestException;
 
-
-    /**
-     * Metodo test del servicio.
-     *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
-     */
-    @PostMapping(value = "/actualizar",
+    @PostMapping(
+            value = "/actualizar",
             produces = {"application/json"},
-            consumes = {"application/json"})
+            consumes = {"application/json"}
+    )
     ResponseEntity<MiRespuestaRS> actualizarCita(
             @RequestBody CitaRq cita
-    )
-            throws BadRequestException;
+    ) throws BadRequestException;
 }
+
