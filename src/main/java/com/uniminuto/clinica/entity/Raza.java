@@ -8,27 +8,35 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
+/**
+ * Entidad JPA que representa la tabla "raza" en la base de datos de la clínica.
+ * Almacena la información de las diferentes razas asociadas a los animales o mascotas.
+ *
+ * @author Yulian Estephania Montealegre Rivas
+ * @version 1.0
+ */
 @Entity
 @Table(name = "raza")
 @Data
 public class Raza {
 
+    /**
+     * Identificador único de la raza (Clave primaria autoincremental).
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "raza_id")
-    private Integer razaId;
+    @Column(name = "id")
+    private Integer id;
 
+    /**
+     * Nombre comercial o descriptivo de la raza (ej. Golden Retriever, Siamés).
+     */
     @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 
-    @Column(name = "especie", nullable = false, length = 100)
+    /**
+     * Especie animal a la que pertenece la raza (ej. Canino, Felino).
+     */
+    @Column(name = "especie", nullable = false, length = 50)
     private String especie;
-
-    @Column(name = "fecha_creacion", nullable = false)
-    private LocalDateTime fechaCreacion;
-
-    @Column(name = "fecha_modificacion")
-    private LocalDateTime fechaModificacion;
 }

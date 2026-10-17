@@ -1,15 +1,20 @@
 package com.uniminuto.clinica.repository;
 
-import com.uniminuto.clinica.entity.AnotacionHistoria;
 import com.uniminuto.clinica.entity.HistoriaMedica;
-import com.uniminuto.clinica.entity.Mascota;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
-import java.util.Optional;
-
+/**
+ * Repositorio JPA para la entidad HistoriaMedica.
+ *
+ * @author Yulian Estephania
+ * @version 1.0
+ */
 @Repository
 public interface HistoriaMedicaRepository extends JpaRepository<HistoriaMedica, Long> {
 
-    Optional<HistoriaMedica> findByMascota(Mascota mascota);
+    List<HistoriaMedica> findAllByOrderByFechaHoraDesc();
+
+    boolean existsByCitaId(Long citaId);
 }
