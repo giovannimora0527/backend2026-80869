@@ -190,7 +190,7 @@ public class CitaServiceImpl implements CitaService {
 
         Medico medico = rq.getMedicoId() == null ? cita.getMedico()
                 : medicoRepository.findById(rq.getMedicoId())
-                        .orElseThrow(() -> new BadRequestException("El veterinario seleccionado no existe"));
+                .orElseThrow(() -> new BadRequestException("El veterinario seleccionado no existe"));
         LocalDateTime fechaHora = rq.resolverFechaHora() == null ? cita.getFechaHora()
                 : normalizar(rq.resolverFechaHora());
 
@@ -341,39 +341,5 @@ public class CitaServiceImpl implements CitaService {
         if (TextoUtil.estaVacio(rq.getMotivo())) {
             throw new BadRequestException("El motivo de la consulta es obligatorio");
         }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Cita> filtrarCitasPorFecha(LocalDateTime fechaInicio, LocalDateTime fechaFin) throws BadRequestException {
-        if (fechaInicio == null) throw new BadRequestException("La fecha inicial no puede ser nula.");
-        if (fechaFin == null) throw new BadRequestException("La fecha final no puede ser nula.");
-        if (fechaInicio.isAfter(fechaFin)) throw new BadRequestException("La fecha inicial no puede ser posterior a la fecha final.");
-
-        return citaRepository.findByFechaHoraBetweenOrderByFechaHoraDesc(fechaInicio, fechaFin);
-    }
-
-    @Override
-    @Transactional
-    public Cita crearCita(Cita cita) throws BadRequestException {
-        if (cita.getFechaHora() == null) throw new BadRequestException("La fecha y hora son obligatorias.");
-        if (cita.getMotivo() == null || cita.getMotivo().trim().isEmpty()) throw new BadRequestException("El motivo es obligatorio.");
-        if (cita.getEstado() == null || cita.getEstado().trim().isEmpty()) throw new BadRequestException("El estado es obligatorio.");
-        return citaRepository.save(cita);
-    }
-
-    @Override
-    @Transactional
-    public Cita actualizarCita(Long id, Cita cita) throws BadRequestException {
-        Cita existente = citaRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("La cita con ID " + id + " no existe."));
-
-        if (cita.getFechaHora() == null) throw new BadRequestException("La fecha y hora son obligatorias.");
-        if (cita.getMotivo() == null || cita.getMotivo().trim().isEmpty()) throw new BadRequestException("El motivo es obligatorio.");
-
-        existente.setFechaHora(cita.getFechaHora());
-        existente.setMotivo(cita.getMotivo());
-        existente.setEstado(cita.getEstado());
-        return citaRepository.save(existente);
     }
 }
