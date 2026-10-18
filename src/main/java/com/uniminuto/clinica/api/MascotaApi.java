@@ -1,117 +1,84 @@
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.Mascota;
-import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
 /**
- * API para la gestión de mascotas.
+ * Contrato REST de mascotas. Ruta base: {@code /mascota}.
  */
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/mascota")
 public interface MascotaApi {
 
     /**
-     * Metodo test del servicio.
+     * {@code GET /mascota/listar}: lista todas las mascotas ordenadas por nombre.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @return 200 con la lista de mascotas
      */
-    @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<List<Mascota>> listarMascotas()
-            throws BadRequestException;
-
+    @GetMapping("/listar")
+    ResponseEntity<List<Mascota>> listarMascotas();
 
     /**
-     * Metodo test del servicio.
+     * {@code GET /mascota/consultar/{id}}: consulta una mascota.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param id identificador de la mascota
+     * @return 200 con la mascota, o 404 si no existe
      */
-    @GetMapping(value = "/listar-ordenado",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<List<Mascota>> listarMascotasOrdenado(
-            @RequestParam boolean ascendente)
-            throws BadRequestException;
-
+    @GetMapping("/consultar/{id}")
+    ResponseEntity<Mascota> consultarMascota(@PathVariable("id") Integer id);
 
     /**
-     * Metodo test del servicio.
+     * {@code GET /mascota/buscar?nombre=}: busca mascotas por fragmento del nombre.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param nombre texto a buscar
+     * @return 200 con las mascotas que coinciden
      */
-    @GetMapping(value = "/buscar-nombre",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<List<Mascota>> buscarMascotaPorNombre(
-            @RequestParam String nombre)
-            throws BadRequestException;
-
+    @GetMapping("/buscar")
+    ResponseEntity<List<Mascota>> buscarMascotaPorNombre(@RequestParam("nombre") String nombre);
 
     /**
-     * Metodo test del servicio.
+     * {@code GET /mascota/buscarPorCliente?clienteId=}: lista solo las mascotas de un cliente
+     * (alimenta el combo dependiente Cliente → Mascota).
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param clienteId identificador del cliente
+     * @return 200 con las mascotas del cliente, o 404 si el cliente no existe
      */
-    @GetMapping(value = "/buscar-by-cliente",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<List<Mascota>> buscarMascotaPorCliente(
-            @RequestParam Long clienteId)
-            throws BadRequestException;
+    @GetMapping("/buscarPorCliente")
+    ResponseEntity<List<Mascota>> buscarMascotaPorCliente(@RequestParam("clienteId") Long clienteId);
 
     /**
-     * Metodo test del servicio.
+     * {@code GET /mascota/buscarPorRaza?razaId=}: lista las mascotas de una raza.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param razaId identificador de la raza
+     * @return 200 con las mascotas de la raza, o 404 si la raza no existe
      */
-    @GetMapping(value = "/buscar-by-raza",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<List<Mascota>> buscarMascotaPorRaza(
-            @RequestParam Integer razaId)
-            throws BadRequestException;
-
+    @GetMapping("/buscarPorRaza")
+    ResponseEntity<List<Mascota>> buscarMascotaPorRaza(@RequestParam("razaId") Integer razaId);
 
     /**
-     * Metodo test del servicio.
+     * {@code POST /mascota/guardar}: registra una mascota.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param rq datos de la mascota
+     * @return 201 con el resultado, o 400 por datos inválidos
      */
-    @PostMapping(value = "/guardar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> guardarMascota(
-            @RequestBody MascotaRq mascotaRq)
-            throws BadRequestException;
+    @PostMapping("/guardar")
+    ResponseEntity<MiRespuestaRS> guardarMascota(@RequestBody MascotaRq rq);
 
     /**
-     * Metodo test del servicio.
+     * {@code PUT /mascota/actualizar/{id}}: actualiza una mascota.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param id identificador de la mascota
+     * @param rq nuevos datos
+     * @return 200 con el resultado, 404 si no existe, 409 si se cambia el dueño de una mascota con citas
      */
-    @PostMapping(value = "/actualizar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> actualizarMascota(
-            @RequestBody MascotaRq mascotaRq)
-            throws BadRequestException;
+    @PutMapping("/actualizar/{id}")
+    ResponseEntity<MiRespuestaRS> actualizarMascota(@PathVariable("id") Integer id, @RequestBody MascotaRq rq);
 }

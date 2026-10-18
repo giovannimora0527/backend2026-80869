@@ -10,25 +10,33 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Raza de una mascota, asociada a una especie (por ejemplo Perro/Canino).
+ */
 @Entity
 @Table(name = "raza")
 @Data
 public class Raza {
 
+    /** Identificador de la raza. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "raza_id")
     private Integer razaId;
 
+    /** Nombre de la raza. */
     @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 
+    /** Especie a la que pertenece. */
     @Column(name = "especie", nullable = false, length = 100)
     private String especie;
 
+    /** Fecha y hora de creación del registro. */
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
+    /** Fecha y hora de la última modificación. */
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 }

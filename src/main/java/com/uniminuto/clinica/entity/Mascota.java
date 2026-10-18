@@ -12,35 +12,43 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Mascota registrada en el centro veterinario. Siempre pertenece a un cliente (1:N).
+ */
 @Entity
 @Table(name = "mascota")
 @Data
 public class Mascota {
 
+    /** Identificador de la mascota. */
     @Id
     @Column(name = "mascota_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer mascotaId;
 
-    @Column(name = "nombre_mascota")
+    /** Nombre de la mascota. */
+    @Column(name = "nombre_mascota", nullable = false, length = 100)
     private String nombreMascota;
 
-    @Column(name = "edad")
+    /** Edad en años. */
+    @Column(name = "edad", nullable = false)
     private Integer edad;
 
-    @Column(name = "fecha_registro")
+    /** Fecha y hora en que se registró. */
+    @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
 
+    /** Fecha y hora de la última modificación; nula si nunca se modificó. */
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
-    @ManyToOne
-    @JoinColumn(name = "cliente_id")
+    /** Cliente propietario. */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    @ManyToOne
-    @JoinColumn(name = "raza_id")
+    /** Raza de la mascota. */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "raza_id", nullable = false)
     private Raza raza;
-
-
 }

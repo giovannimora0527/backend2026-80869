@@ -2,37 +2,34 @@ package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import com.uniminuto.clinica.exception.BadRequestException;
 
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/clinica")
+/**
+ * Contrato REST de verificación del servicio. Ruta base: {@code /clinica}.
+ */
 public interface ClinicaApi {
 
     /**
-     * Metodo test del servicio.
+     * {@code GET /clinica/test}: comprueba que el backend responde.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @return 200 con un mensaje de confirmación
      */
-    @GetMapping(value = "/test",
-            produces = {"application/text"},
-            consumes = {"application/json"})
-    ResponseEntity<String> testService()
-            throws BadRequestException;
+    @GetMapping("/test")
+    ResponseEntity<String> testService();
 
+    /**
+     * {@code GET /clinica/test2}: segunda comprobación del servicio.
+     *
+     * @return 200 con un mensaje de confirmación
+     */
+    @GetMapping("/test2")
+    ResponseEntity<String> testService2();
 
-    @GetMapping(value = "/test2",
-            produces = {"application/text"},
-            consumes = {"application/json"})
-    ResponseEntity<String> testService2()
-            throws BadRequestException;
-
-    @GetMapping(value = "/test3",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> testService3()
-            throws BadRequestException;
+    /**
+     * {@code GET /clinica/test3}: comprobación con respuesta estructurada.
+     *
+     * @return 200 con la respuesta estándar
+     */
+    @GetMapping("/test3")
+    ResponseEntity<MiRespuestaRS> testService3();
 }

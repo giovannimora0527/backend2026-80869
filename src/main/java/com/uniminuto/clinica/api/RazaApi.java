@@ -1,29 +1,34 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.exception.BadRequestException;
-import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
+import com.uniminuto.clinica.entity.Raza;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/raza")
+import java.util.List;
+
+/**
+ * Contrato REST de razas. Ruta base: {@code /raza}.
+ */
 public interface RazaApi {
 
     /**
-     * Metodo test del servicio.
+     * {@code GET /raza/listar}: lista las razas ordenadas por especie y nombre (combo del formulario de mascotas).
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @return 200 con la lista de razas
      */
-    @PostMapping(value = "/guardar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> guardarRaza(
-            @RequestBody RazaRq razaRq)
-            throws BadRequestException;
+    @GetMapping("/listar")
+    ResponseEntity<List<Raza>> listarRazas();
+
+    /**
+     * {@code POST /raza/guardar}: registra una raza nueva.
+     *
+     * @param razaRq datos de la raza
+     * @return 201 con el resultado, 400 por datos inválidos o 409 si la raza ya existe
+     */
+    @PostMapping("/guardar")
+    ResponseEntity<MiRespuestaRS> guardarRaza(@RequestBody RazaRq razaRq);
 }
