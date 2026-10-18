@@ -1,59 +1,71 @@
 package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.Cita;
-import com.uniminuto.clinica.entity.Mascota;
-import com.uniminuto.clinica.entity.Medico;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * Repositorio JPA para la entidad Cita.
- * Permite realizar operaciones CRUD y consultas personalizadas sobre citas veterinarias.
- *
- * @author Yulian Estephania Montealegre
+ * Acceso a datos de citas. Soporta consultas dinámicas (filtros, paginación y orden)
+ * mediante {@link JpaSpecificationExecutor}.
  */
 @Repository
-public interface CitaRepository extends JpaRepository<Cita, Long> {
+public interface CitaRepository extends JpaRepository<Cita, Long>, JpaSpecificationExecutor<Cita> {
 
     /**
-     * Busca citas dentro de un rango de fecha y hora.
+     * Lista todas las citas, las más recientes primero.
      *
-     * @param inicio Fecha inicial.
-     * @param fin    Fecha final.
-     * @return Lista de citas en ese rango.
+     * @return citas ordenadas por fecha y hora descendente
      */
-    List<Cita> findByFechaHoraBetween(LocalDateTime inicio, LocalDateTime fin);
+    List<Cita> findAllByOrderByFechaHoraDesc();
 
     /**
-     * Busca citas asignadas a un médico en un rango de fecha y hora.
+     * Indica si un veterinario ya tiene una cita vigente (no cancelada) dentro de un rango.
      *
-     * @param medico Entidad Medico.
-     * @param inicio Fecha inicial.
-     * @param fin    Fecha final.
-     * @return Lista de citas del médico en el rango.
+     * @param medicoId identificador del veterinario
+     * @param inicio   inicio del rango, incluido
+     * @param fin      fin del rango, incluido
+     * @param excluirId cita que se ignora (la que se está editando); use 0 si no aplica
+     * @return {@code true} si existe al menos una cita que choca con el rango
      */
-    List<Cita> findByMedicoAndFechaHoraBetween(Medico medico, LocalDateTime inicio, LocalDateTime fin);
+    @Query("SELECT COUNT(c) > 0 FROM Cita c WHERE c.medico.id = :medicoId "
+            + "AND c.fechaHora BETWEEN :inicio AND :fin "
+            + "AND LOWER(c.estado) <> 'cancelada' AND c.id <> :excluirId")
+    boolean existeCitaVigenteDelMedico(@Param("medicoId") Long medicoId,
+                                       @Param("inicio") LocalDateTime inicio,
+                                       @Param("fin") LocalDateTime fin,
+                                       @Param("excluirId") Long excluirId);
 
     /**
-     * Busca citas asignadas a una mascota en un rango de fecha y hora.
+     * Indica si una mascota ya tiene una cita vigente (no cancelada) dentro de un rango.
      *
-     * @param mascota Entidad Mascota.
-     * @param inicio  Fecha inicial.
-     * @param fin     Fecha final.
-     * @return Lista de citas de la mascota en el rango.
+     * @param mascotaId identificador de la mascota
+     * @param inicio    inicio del rango, incluido
+     * @param fin       fin del rango, incluido
+     * @param excluirId cita que se ignora (la que se está editando); use 0 si no aplica
+     * @return {@code true} si existe al menos una cita que choca con el rango
      */
-    List<Cita> findByMascotaAndFechaHoraBetween(Mascota mascota, LocalDateTime inicio, LocalDateTime fin);
+    @Query("SELECT COUNT(c) > 0 FROM Cita c WHERE c.mascota.mascotaId = :mascotaId "
+            + "AND c.fechaHora BETWEEN :inicio AND :fin "
+            + "AND LOWER(c.estado) <> 'cancelada' AND c.id <> :excluirId")
+    boolean existeCitaVigenteDeLaMascota(@Param("mascotaId") Integer mascotaId,
+                                         @Param("inicio") LocalDateTime inicio,
+                                         @Param("fin") LocalDateTime fin,
+                                         @Param("excluirId") Long excluirId);
 
     /**
-     * Busca una cita específica por mascota y médico.
+     * Indica si una mascota tiene alguna cita registrada (de cualquier estado).
      *
-     * @param mascota Entidad Mascota.
-     * @param medico  Entidad Medico.
-     * @return Optional con la cita si existe.
+     * @param mascotaId identificador de la mascota
+     * @return {@code true} si la mascota ya tiene citas
      */
-    Optional<Cita> findByMascotaAndMedico(Mascota mascota, Medico medico);
+    @Query("SELECT COUNT(c) > 0 FROM Cita c WHERE c.mascota.mascotaId = :mascotaId")
+    boolean existeCitaDeLaMascota(@Param("mascotaId") Integer mascotaId);
 }

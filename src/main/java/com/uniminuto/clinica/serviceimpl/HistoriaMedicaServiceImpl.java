@@ -1,139 +1,217 @@
 package com.uniminuto.clinica.serviceimpl;
 
-import com.uniminuto.clinica.entity.*;
+import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.Cliente;
+import com.uniminuto.clinica.entity.HistoriaMedica;
+import com.uniminuto.clinica.entity.Mascota;
+import com.uniminuto.clinica.entity.Medico;
+import com.uniminuto.clinica.enums.EstadoCita;
+import com.uniminuto.clinica.enums.EstadoHistoria;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.exception.ConflictException;
 import com.uniminuto.clinica.exception.ResourceNotFoundException;
 import com.uniminuto.clinica.models.HistoriaMedicaRq;
+import com.uniminuto.clinica.models.HistoriaResumenRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
-import com.uniminuto.clinica.repository.*;
+import com.uniminuto.clinica.models.PaginaRs;
+import com.uniminuto.clinica.models.filtro.HistoriaFiltro;
+import com.uniminuto.clinica.repository.CitaRepository;
+import com.uniminuto.clinica.repository.ClienteRepository;
+import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
+import com.uniminuto.clinica.repository.MascotaRepository;
+import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.service.HistoriaMedicaService;
-import lombok.RequiredArgsConstructor;
+import com.uniminuto.clinica.specification.HistoriaMedicaSpecification;
+import com.uniminuto.clinica.util.FechaUtil;
+import com.uniminuto.clinica.util.PaginacionUtil;
+import com.uniminuto.clinica.util.TextoUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Implementación de la lógica de negocio para la gestión de Historias Médicas.
- * Se encarga de validar la existencia de clientes, mascotas, médicos y citas,
- * asegurando el cumplimiento de las reglas de negocio.
- *
- * @author Yulian Estefania
- * @version 1.0
+ * Implementación del servicio de historias clínicas. Reglas de negocio:
+ * <ol>
+ *   <li>La historia pertenece a un cliente existente y a una mascota que sea de ese cliente.</li>
+ *   <li>La historia se genera a partir de una cita de esa misma mascota que esté Atendida.</li>
+ *   <li>Cada cita tiene como máximo una historia (evita duplicidad).</li>
+ *   <li>La fecha de la consulta no puede ser futura ni anterior a la de la cita.</li>
+ *   <li>Una historia cerrada ya no admite nuevas anotaciones.</li>
+ * </ol>
  */
 @Service
-@RequiredArgsConstructor
 public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
 
-    private final HistoriaMedicaRepository historiaMedicaRepository;
-    private final ClienteRepository clienteRepository;
-    private final MascotaRepository mascotaRepository;
-    private final CitaRepository citaRepository;
-    private final MedicoRepository medicoRepository;
+    /**
+     * Columnas por las que se puede ordenar el listado: clave pública → propiedad de la entidad.
+     */
+    private static final Map<String, String> ORDENABLES = Map.of(
+            "id", "id",
+            "fecha", "fechaCreacion",
+            "fechaHora", "fechaCreacion",
+            "mascota", "mascota.nombreMascota",
+            "cliente", "cliente.apellidos",
+            "veterinario", "medico.apellidos",
+            "motivo", "motivo",
+            "estado", "estado");
+
+    /** Acceso a datos de historias clínicas. */
+    @Autowired
+    private HistoriaMedicaRepository historiaMedicaRepository;
+
+    /** Acceso a datos de clientes. */
+    @Autowired
+    private ClienteRepository clienteRepository;
+
+    /** Acceso a datos de mascotas. */
+    @Autowired
+    private MascotaRepository mascotaRepository;
+
+    /** Acceso a datos de citas. */
+    @Autowired
+    private CitaRepository citaRepository;
+
+    /** Acceso a datos de veterinarios. */
+    @Autowired
+    private MedicoRepository medicoRepository;
 
     /**
-     * Lista todas las historias médicas registradas en el sistema,
-     * ordenadas por fecha y hora de forma descendente.
-     *
-     * @return {@link MiRespuestaRS} que contiene el estado HTTP, mensaje y la lista de historias.
+     * {@inheritDoc}
      */
     @Override
-    @Transactional(readOnly = true)
-    public MiRespuestaRS listar() {
-        List<HistoriaMedica> historias = historiaMedicaRepository.findAllByOrderByFechaHoraDesc();
-
-        MiRespuestaRS response = new MiRespuestaRS();
-        response.setStatus(200);
-        response.setMessage("Historias médicas listadas exitosamente");
-        response.setData(historias);
-        return response;
+    public List<HistoriaMedica> listarHistorias() {
+        return historiaMedicaRepository.findAllByOrderByFechaCreacionDesc();
     }
 
     /**
-     * Busca una historia médica específica por su identificador único.
-     *
-     * @param id Identificador único de la historia médica.
-     * @return {@link MiRespuestaRS} con los datos de la historia encontrada.
-     * @throws ResourceNotFoundException si la historia médica no existe.
+     * {@inheritDoc}
      */
     @Override
-    @Transactional(readOnly = true)
-    public MiRespuestaRS buscarPorId(Long id) {
-        HistoriaMedica historia = historiaMedicaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Historia médica no encontrada con ID: " + id));
-
-        MiRespuestaRS response = new MiRespuestaRS();
-        response.setStatus(200);
-        response.setMessage("Historia médica encontrada exitosamente");
-        response.setData(historia);
-        return response;
+    public PaginaRs<HistoriaResumenRs> listarHistoriasPaginado(HistoriaFiltro filtro) {
+        Pageable pageable = PaginacionUtil.construir(filtro, ORDENABLES, "fechaHora", Sort.Direction.DESC);
+        Page<HistoriaMedica> pagina = historiaMedicaRepository
+                .findAll(HistoriaMedicaSpecification.desdeFiltro(filtro), pageable);
+        return PaginaRs.desde(pagina, HistoriaResumenRs::desde);
     }
 
     /**
-     * Registra y guarda una nueva historia médica aplicando rigurosas validaciones.
+     * {@inheritDoc}
+     */
+    @Override
+    public HistoriaMedica consultarHistoria(Long id) {
+        return historiaMedicaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("La historia clínica con ID " + id + " no existe"));
+    }
+
+    /**
+     * {@inheritDoc}
      *
-     * @param request DTO con los datos de entrada para la creación de la historia médica.
-     * @return {@link MiRespuestaRS} con la historia médica recién guardada.
+     * @throws BadRequestException si faltan datos, alguna referencia no existe, la mascota no es del cliente,
+     *                             la cita es de otra mascota o la fecha no es coherente
+     * @throws ConflictException   si la cita no está atendida o ya tiene historia
      */
     @Override
     @Transactional
-    public MiRespuestaRS guardar(HistoriaMedicaRq request) {
-        // 1. Validar que el cliente exista en la base de datos (404)
-        Cliente cliente = clienteRepository.findById(request.getClienteId())
-                .orElseThrow(() -> new ResourceNotFoundException("El cliente con ID " + request.getClienteId() + " no existe"));
+    public MiRespuestaRS crearHistoria(HistoriaMedicaRq rq) {
+        validarCamposObligatorios(rq);
 
-        // 2. Validar que la mascota exista en la base de datos (404)
-        Mascota mascota = mascotaRepository.findById(request.getMascotaId().intValue())
-                .orElseThrow(() -> new ResourceNotFoundException("La mascota con ID " + request.getMascotaId() + " no existe"));
-
-        // Validar regla de negocio: La mascota debe pertenecer al cliente especificado
-        if (mascota.getCliente() == null || !mascota.getCliente().getId().equals(cliente.getId())) {
-            throw new BadRequestException("La mascota no pertenece al cliente especificado");
+        Cliente cliente = clienteRepository.findById(rq.getClienteId())
+                .orElseThrow(() -> new BadRequestException("El cliente seleccionado no existe"));
+        Mascota mascota = mascotaRepository.findById(rq.getMascotaId())
+                .orElseThrow(() -> new BadRequestException("La mascota seleccionada no existe"));
+        if (mascota.getCliente() == null || !cliente.getId().equals(mascota.getCliente().getId())) {
+            throw new BadRequestException("La mascota seleccionada no pertenece al cliente indicado");
+        }
+        Cita cita = citaRepository.findById(rq.getCitaId())
+                .orElseThrow(() -> new BadRequestException("La cita seleccionada no existe"));
+        if (!mascota.getMascotaId().equals(cita.getMascota().getMascotaId())) {
+            throw new BadRequestException("La cita seleccionada pertenece a otra mascota");
+        }
+        if (EstadoCita.desdeTexto(cita.getEstado()) != EstadoCita.ATENDIDA) {
+            throw new ConflictException("Solo se puede crear la historia clínica de una cita atendida");
+        }
+        if (historiaMedicaRepository.findByCitaId(cita.getId()).isPresent()) {
+            throw new ConflictException("La cita ya tiene una historia clínica asociada");
         }
 
-        // 3. Validar que el médico exista en la base de datos (404)
-        Medico medico = medicoRepository.findById(request.getMedicoId())
-                .orElseThrow(() -> new ResourceNotFoundException("El médico con ID " + request.getMedicoId() + " no existe"));
+        Medico medico = rq.getMedicoId() == null
+                ? cita.getMedico()
+                : medicoRepository.findById(rq.getMedicoId())
+                        .orElseThrow(() -> new BadRequestException("El veterinario seleccionado no existe"));
 
-        // 4. Validar que la cita exista en la base de datos (404)
-        Cita cita = citaRepository.findById(request.getCitaId())
-                .orElseThrow(() -> new ResourceNotFoundException("La cita con ID " + request.getCitaId() + " no existe"));
-
-        // Validar regla de negocio: La cita debe pertenecer a la mascota especificada
-        if (cita.getMascota() == null || !cita.getMascota().getMascotaId().equals(mascota.getMascotaId())) {
-            throw new BadRequestException("La cita no pertenece al paciente (mascota) especificado");
+        LocalDateTime fecha = rq.getFechaHora() == null ? LocalDateTime.now() : rq.getFechaHora();
+        if (FechaUtil.esFutura(fecha)) {
+            throw new BadRequestException("La fecha de la consulta no puede ser futura");
+        }
+        if (FechaUtil.esAnterior(fecha, cita.getFechaHora())) {
+            throw new BadRequestException("La fecha de la consulta no puede ser anterior a la fecha de la cita");
         }
 
-        // Validar regla de negocio: La cita debe estar en estado ATENDIDA para registrar su historia
-        if (cita.getEstado() == null || !cita.getEstado().equalsIgnoreCase("ATENDIDA")) {
-            throw new BadRequestException("La cita debe estar en estado ATENDIDA para registrar su historia médica");
-        }
-
-        // Validar regla de negocio: No debe existir ya una historia médica asociada a esta misma cita (409 Conflict)
-        if (historiaMedicaRepository.existsByCitaId(request.getCitaId())) {
-            throw new ConflictException("Ya existe una historia médica registrada para esta cita");
-        }
-
-        // Construir y mapear la nueva entidad de historia médica
         HistoriaMedica historia = new HistoriaMedica();
+        historia.setCliente(cliente);
         historia.setMascota(mascota);
         historia.setCita(cita);
         historia.setMedico(medico);
-        historia.setFechaHora(request.getFechaHora());
-        historia.setMotivoConsulta(request.getMotivoConsulta());
-        historia.setDiagnostico(request.getDiagnostico());
-        historia.setObservaciones(request.getObservaciones());
-        historia.setEstado("ACTIVA");
+        historia.setFechaCreacion(fecha);
+        historia.setMotivo(rq.getMotivo().trim());
+        historia.setDiagnostico(rq.getDiagnostico().trim());
+        historia.setObservaciones(TextoUtil.estaVacio(rq.getObservaciones()) ? null : rq.getObservaciones().trim());
+        historia.setEstado(EstadoHistoria.ABIERTA.getEtiqueta());
+        HistoriaMedica guardada = historiaMedicaRepository.save(historia);
 
-        // Guardar la entidad en la base de datos
-        HistoriaMedica saved = historiaMedicaRepository.save(historia);
+        return MiRespuestaRS.of(HttpStatus.CREATED.value(), "Historia clínica creada exitosamente", guardada.getId());
+    }
 
-        // Construir la respuesta estándar del servidor
-        MiRespuestaRS response = new MiRespuestaRS();
-        response.setStatus(200);
-        response.setMessage("Historia médica guardada exitosamente");
-        response.setData(saved);
-        return response;
+    /**
+     * {@inheritDoc}
+     *
+     * @throws ResourceNotFoundException si la historia no existe
+     * @throws ConflictException         si la historia ya está cerrada
+     */
+    @Override
+    @Transactional
+    public MiRespuestaRS cerrarHistoria(Long id) {
+        HistoriaMedica historia = consultarHistoria(id);
+        if (EstadoHistoria.CERRADA.coincideCon(historia.getEstado())) {
+            throw new ConflictException("La historia clínica ya se encuentra cerrada");
+        }
+        historia.setEstado(EstadoHistoria.CERRADA.getEtiqueta());
+        historiaMedicaRepository.save(historia);
+        return MiRespuestaRS.of(HttpStatus.OK.value(), "Historia clínica cerrada exitosamente", historia.getId());
+    }
+
+    /**
+     * Valida los campos obligatorios para crear una historia clínica.
+     *
+     * @param rq solicitud a validar
+     * @throws BadRequestException si falta algún dato
+     */
+    private void validarCamposObligatorios(HistoriaMedicaRq rq) {
+        if (rq == null) {
+            throw new BadRequestException("Los datos de la historia clínica son obligatorios");
+        }
+        if (rq.getClienteId() == null) {
+            throw new BadRequestException("El cliente es obligatorio");
+        }
+        if (rq.getMascotaId() == null) {
+            throw new BadRequestException("La mascota es obligatoria");
+        }
+        if (rq.getCitaId() == null) {
+            throw new BadRequestException("La cita es obligatoria");
+        }
+        if (TextoUtil.estaVacio(rq.getMotivo())) {
+            throw new BadRequestException("El motivo de la consulta es obligatorio");
+        }
+        if (TextoUtil.estaVacio(rq.getDiagnostico())) {
+            throw new BadRequestException("El diagnóstico es obligatorio");
+        }
     }
 }

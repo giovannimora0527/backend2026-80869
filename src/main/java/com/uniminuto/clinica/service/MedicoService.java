@@ -1,27 +1,27 @@
 package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Medico;
+
 import java.util.List;
 
 /**
- * Interfaz que define los servicios de negocio para los Médicos Veterinarios.
- *
- * @author Yulian Estephania Montealegre
+ * Operaciones de consulta de veterinarios.
  */
 public interface MedicoService {
 
     /**
-     * Lista todos los médicos registrados en el sistema.
+     * Lista todos los veterinarios ordenados por apellidos y nombres.
      *
-     * @return Lista de entidades Medico.
+     * @return veterinarios ordenados
      */
     List<Medico> listarMedicos();
 
     /**
-     * Busca un médico por su ID único.
+     * Consulta un veterinario por su identificador.
      *
-     * @param id Identificador del médico.
-     * @return Entidad Medico encontrada.
+     * @param id identificador del veterinario
+     * @return veterinario encontrado
+     * @throws com.uniminuto.clinica.exception.ResourceNotFoundException si el veterinario no existe
      */
-    Medico buscarMedicoPorId(Long id);
+    Medico consultarMedico(Long id);
 }

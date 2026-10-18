@@ -1,53 +1,77 @@
 package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Cita;
-import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CitaRq;
+import com.uniminuto.clinica.models.CitaResumenRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PaginaRs;
+import com.uniminuto.clinica.models.filtro.CitaFiltro;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Interfaz que define los servicios de negocio para la gestión de Citas Médicas.
- *
- * @author Yulian Estefanía Montealegre
+ * Operaciones y reglas de negocio de las citas médicas. El backend es el responsable de
+ * validar las reglas críticas; el frontend solo las refleja para mejorar la experiencia.
  */
 public interface CitaService {
 
     /**
-     * Obtiene el listado completo de citas médicas registradas.
+     * Lista todas las citas, las más recientes primero (sin paginar).
      *
-     * @return Lista de citas.
-     * @throws BadRequestException Si ocurre un error en la solicitud.
+     * @return citas ordenadas por fecha y hora descendente
      */
-    List<Cita> listarCitas() throws BadRequestException;
+    List<Cita> listarCitas();
 
     /**
-     * Obtiene el listado de citas dentro de un rango de fechas.
+     * Lista las citas de forma resumida con filtros, paginación y ordenamiento. Por defecto
+     * ordena por fecha y hora descendente.
      *
-     * @param fechaInicio Fecha y hora inicial.
-     * @param fechaFin Fecha y hora final.
-     * @return Lista de citas filtradas.
-     * @throws BadRequestException Si los parámetros de fecha son inválidos.
+     * @param filtro filtros y parámetros de paginación
+     * @return página de citas resumidas
      */
-    List<Cita> listarCitasRango(LocalDateTime fechaInicio, LocalDateTime fechaFin) throws BadRequestException;
+    PaginaRs<CitaResumenRs> listarCitasPaginado(CitaFiltro filtro);
 
     /**
-     * Registra una nueva cita médica en el sistema.
+     * Consulta el detalle de una cita.
      *
-     * @param citaRq Datos de la cita a crear.
-     * @return Respuesta estandarizada con el resultado.
-     * @throws BadRequestException Si los datos obligatorios faltan.
+     * @param id identificador de la cita
+     * @return cita encontrada
+     * @throws com.uniminuto.clinica.exception.ResourceNotFoundException si no existe
      */
-    MiRespuestaRS crearCita(CitaRq citaRq) throws BadRequestException;
+    Cita consultarCita(Long id);
 
     /**
-     * Actualiza una cita médica existente.
+     * Registra una cita nueva validando cliente, mascota, veterinario, fecha y disponibilidad.
      *
-     * @param citaRq Datos actualizados de la cita.
-     * @return Respuesta estandarizada con el resultado.
-     * @throws BadRequestException Si ocurre un error de validación.
+     * @param rq datos de la cita
+     * @return respuesta 201 con el identificador de la cita creada
      */
-    MiRespuestaRS actualizarCita(CitaRq citaRq) throws BadRequestException;
+    MiRespuestaRS crearCita(CitaRq rq);
+
+    /**
+     * Edita una cita respetando su estado: solo las citas activas pueden cambiar de fecha,
+     * hora, veterinario, motivo o estado.
+     *
+     * @param id identificador de la cita
+     * @param rq nuevos datos de la cita
+     * @return respuesta 200 con el identificador de la cita
+     */
+    MiRespuestaRS actualizarCita(Long id, CitaRq rq);
+
+    /**
+     * Cancela una cita activa (eliminación lógica: la cita se conserva con estado Cancelada).
+     *
+     * @param id identificador de la cita
+     * @return respuesta 200 con el identificador de la cita
+     */
+    MiRespuestaRS cancelarCita(Long id);
+
+    /**
+     * Reactiva una cita cancelada. Es la operación explícita que permite volver a activarla;
+     * revalida fecha y disponibilidad.
+     *
+     * @param id identificador de la cita
+     * @return respuesta 200 con el identificador de la cita
+     */
+    MiRespuestaRS reactivarCita(Long id);
 }

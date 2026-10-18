@@ -1,27 +1,19 @@
 package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Medicamento;
+
 import java.util.List;
 
 /**
- * Interfaz que define los servicios de negocio para los Medicamentos.
- *
- * @author Yulian Estephania Montealegre
+ * Operaciones de consulta de medicamentos, necesarias para llenar el combo del
+ * formulario de fórmulas médicas.
  */
 public interface MedicamentoService {
 
     /**
-     * Lista todos los medicamentos disponibles en inventario.
+     * Lista todos los medicamentos ordenados por nombre.
      *
-     * @return Lista de entidades Medicamento.
+     * @return medicamentos ordenados alfabéticamente
      */
     List<Medicamento> listarMedicamentos();
-
-    /**
-     * Busca un medicamento por su ID único.
-     *
-     * @param id Identificador del medicamento.
-     * @return Entidad Medicamento encontrada.
-     */
-    Medicamento buscarMedicamentoPorId(Long id);
 }

@@ -10,35 +10,29 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Implementación de la lógica de negocio para la gestión de Médicos Veterinarios.
- *
- * @author Yulian Estephania Montealegre
+ * Implementación del servicio de consulta de veterinarios.
  */
 @Service
 public class MedicoServiceImpl implements MedicoService {
 
+    /** Acceso a datos de veterinarios. */
     @Autowired
     private MedicoRepository medicoRepository;
 
     /**
-     * Lista todos los médicos de la veterinaria.
-     *
-     * @return Lista completa de médicos.
+     * {@inheritDoc}
      */
     @Override
     public List<Medico> listarMedicos() {
-        return medicoRepository.findAll();
+        return medicoRepository.findAllByOrderByApellidosAscNombresAsc();
     }
 
     /**
-     * Busca un médico por ID y lanza excepción 404 si no existe.
-     *
-     * @param id Identificador del médico.
-     * @return Entidad Medico.
+     * {@inheritDoc}
      */
     @Override
-    public Medico buscarMedicoPorId(Long id) {
+    public Medico consultarMedico(Long id) {
         return medicoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("El médico con ID " + id + " no fue encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("El veterinario con ID " + id + " no existe"));
     }
 }

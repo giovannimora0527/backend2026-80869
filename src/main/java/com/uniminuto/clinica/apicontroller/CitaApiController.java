@@ -2,53 +2,99 @@ package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.CitaApi;
 import com.uniminuto.clinica.entity.Cita;
-import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.CitaResumenRs;
 import com.uniminuto.clinica.models.CitaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PaginaRs;
+import com.uniminuto.clinica.models.filtro.CitaFiltro;
 import com.uniminuto.clinica.service.CitaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Controlador REST que implementa los endpoints de CitaApi
- * para la gestión y agendamiento de citas médicas veterinarias.
- *
- * @author Yulian Estefanía Montealegre
+ * Controlador REST de citas médicas. Solo traduce HTTP ↔ servicio: las reglas viven en
+ * {@link CitaService} y los errores los traduce {@code GlobalExceptionHandler}.
  */
 @RestController
-@RequestMapping("/citas")
+@RequestMapping("/cita")
 public class CitaApiController implements CitaApi {
 
+    /** Servicio con la lógica de negocio de las citas. */
     @Autowired
     private CitaService citaService;
 
-    @GetMapping
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<List<Cita>> listarCitas() throws BadRequestException {
-        return ResponseEntity.ok(this.citaService.listarCitas());
+    public ResponseEntity<List<Cita>> listarCitas() {
+        return ResponseEntity.ok(citaService.listarCitas());
     }
 
-    @GetMapping("/rango")
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<List<Cita>> listarCitasRango(
-            @RequestParam LocalDateTime fechaInicio,
-            @RequestParam LocalDateTime fechaFin) throws BadRequestException {
-        return ResponseEntity.ok(this.citaService.listarCitasRango(fechaInicio, fechaFin));
+    public ResponseEntity<PaginaRs<CitaResumenRs>> listarCitasPaginado(CitaFiltro filtro) {
+        return ResponseEntity.ok(citaService.listarCitasPaginado(filtro));
     }
 
-    @PostMapping
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<MiRespuestaRS> crearCita(@RequestBody CitaRq cita) throws BadRequestException {
-        return ResponseEntity.ok(this.citaService.crearCita(cita));
+    public ResponseEntity<Cita> consultarCita(Long id) {
+        return ResponseEntity.ok(citaService.consultarCita(id));
     }
 
-    @PutMapping
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<MiRespuestaRS> actualizarCita(@RequestBody CitaRq cita) throws BadRequestException {
-        return ResponseEntity.ok(this.citaService.actualizarCita(cita));
+    public ResponseEntity<MiRespuestaRS> crearCita(CitaRq rq) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(citaService.crearCita(rq));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<MiRespuestaRS> actualizarCita(Long id, CitaRq rq) {
+        return ResponseEntity.ok(citaService.actualizarCita(id, rq));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<MiRespuestaRS> cancelarCita(Long id) {
+        return ResponseEntity.ok(citaService.cancelarCita(id));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<MiRespuestaRS> reactivarCita(Long id) {
+        return ResponseEntity.ok(citaService.reactivarCita(id));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<List<Cita>> filtrarCitasPorFecha(
+            LocalDateTime fechaInicio,
+            LocalDateTime fechaFin) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.filtrarCitasPorFecha(fechaInicio, fechaFin));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<Cita> crearCita(@RequestBody Cita cita) throws BadRequestException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.citaService.crearCita(cita));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<Cita> actualizarCita(
+            @PathVariable Long id,
+            @RequestBody Cita cita) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.actualizarCita(id, cita));
     }
 }

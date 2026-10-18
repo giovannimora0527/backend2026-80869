@@ -2,84 +2,74 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Raza;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.exception.ConflictException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
 import com.uniminuto.clinica.repository.RazaRepository;
 import com.uniminuto.clinica.service.RazaService;
+import com.uniminuto.clinica.util.TextoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Sort;
+
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * Implementación de la lógica de negocio para la gestión de Razas.
- *
- * @author Yulian Estefanía Montealegre
+ * Implementación del servicio de razas.
  */
 @Service
 public class RazaServiceImpl implements RazaService {
 
+    /** Acceso a datos de razas. */
     @Autowired
     private RazaRepository razaRepository;
 
-    /**
-     * Crea una nueva raza validando que no exista previamente para la misma especie.
-     *
-     * @param razaRq DTO con los datos de la raza.
-     * @return Respuesta estandarizada con el resultado.
-     * @throws BadRequestException Si los datos son inválidos o la raza ya existe.
-     */
+    /** {@inheritDoc} */
     @Override
-    public MiRespuestaRS crearRazaNueva(RazaRq razaRq) throws BadRequestException {
-        this.validarRazaRq(razaRq);
-
-        Optional<Raza> optRaza = this.razaRepository.findByEspecieAndNombre(razaRq.getEspecie(), razaRq.getNombre());
-
-        if (optRaza.isPresent()) {
-            throw new BadRequestException("La raza ya existe para la especie especificada.");
-        }
-
-        Raza nuevaRaza = new Raza();
-        nuevaRaza.setEspecie(razaRq.getEspecie());
-        nuevaRaza.setNombre(razaRq.getNombre());
-
-        this.razaRepository.save(nuevaRaza);
-
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Raza creada correctamente.");
-        return respuesta;
+    public List<Raza> listarRazas() {
+        return razaRepository.findAll(Sort.by("especie").ascending().and(Sort.by("nombre").ascending()));
     }
 
     /**
-     * Obtiene el listado completo de razas ordenadas alfabéticamente.
+     * {@inheritDoc}
      *
-     * @return Lista de razas.
-     * @throws BadRequestException Si ocurre un error en la consulta.
+     * @throws BadRequestException si falta el nombre o la especie
+     * @throws ConflictException   si la raza ya existe para esa especie
      */
     @Override
-    public List<Raza> listarRazas() throws BadRequestException {
-        return razaRepository.findAll().stream()
-                .sorted((r1, r2) -> r1.getNombre().compareToIgnoreCase(r2.getNombre()))
-                .toList();
+    public MiRespuestaRS crearRazaNueva(RazaRq razaRq) {
+        validarRazaRq(razaRq);
+        String nombre = razaRq.getNombre().trim();
+        String especie = razaRq.getEspecie().trim();
+        if (razaRepository.findByEspecieAndNombre(especie, nombre).isPresent()) {
+            throw new ConflictException("La raza ya existe para la especie indicada");
+        }
+
+        Raza nueva = new Raza();
+        nueva.setEspecie(especie);
+        nueva.setNombre(nombre);
+        nueva.setFechaCreacion(LocalDateTime.now());
+        Raza guardada = razaRepository.save(nueva);
+
+        return MiRespuestaRS.of(HttpStatus.CREATED.value(), "Raza creada correctamente",
+                guardada.getRazaId().longValue());
     }
 
     /**
-     * Valida los campos obligatorios del objeto DTO de raza.
+     * Valida los campos obligatorios de una raza.
      *
-     * @param razaRq DTO a validar.
-     * @throws BadRequestException Si algún campo está vacío o es nulo.
+     * @param razaRq solicitud a validar
+     * @throws BadRequestException si falta algún dato
      */
-    private void validarRazaRq(RazaRq razaRq) throws BadRequestException {
-        if (razaRq == null) {
-            throw new BadRequestException("Los datos de la raza no pueden ser nulos.");
+    private void validarRazaRq(RazaRq razaRq) {
+        if (razaRq == null || TextoUtil.estaVacio(razaRq.getNombre())) {
+            throw new BadRequestException("El nombre de la raza es obligatorio");
         }
-        if (razaRq.getNombre() == null || razaRq.getNombre().trim().isEmpty()) {
-            throw new BadRequestException("El nombre de la raza es obligatorio.");
-        }
-        if (razaRq.getEspecie() == null || razaRq.getEspecie().trim().isEmpty()) {
-            throw new BadRequestException("La especie de la raza es obligatoria.");
+        if (TextoUtil.estaVacio(razaRq.getEspecie())) {
+            throw new BadRequestException("La especie de la raza es obligatoria");
         }
     }
 }

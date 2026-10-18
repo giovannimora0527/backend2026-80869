@@ -1,36 +1,31 @@
 package com.uniminuto.clinica.service;
 
-import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 
 /**
- * Interfaz que define los servicios de diagnóstico y pruebas del sistema de la clínica.
- *
- * @author Yulian Estefanía Montealegre
+ * Servicio de verificación (health check) del backend. Las operaciones clínicas viven en
+ * sus propios servicios (citas, historias, anotaciones, fórmulas).
  */
 public interface ClinicaService {
 
     /**
-     * Servicio de prueba 1.
+     * Prueba básica de que el servicio responde.
      *
-     * @return Mensaje de texto de comprobación.
-     * @throws BadRequestException Si ocurre un error en la solicitud.
+     * @return mensaje de confirmación
      */
-    String testService() throws BadRequestException;
+    String testService();
 
     /**
-     * Servicio de prueba 2.
+     * Segunda prueba del servicio.
      *
-     * @return Mensaje de texto secundario.
-     * @throws BadRequestException Si ocurre un error en la solicitud.
+     * @return mensaje de confirmación
      */
-    String testService2() throws BadRequestException;
+    String testService2();
 
     /**
-     * Servicio de prueba 3 que retorna una respuesta estandarizada.
+     * Prueba que devuelve una respuesta estructurada.
      *
-     * @return Objeto MiRespuestaRS con el estado de éxito.
-     * @throws BadRequestException Si ocurre un error en la solicitud.
+     * @return respuesta con estado 200 y mensaje de confirmación
      */
-    MiRespuestaRS testService3() throws BadRequestException;
+    MiRespuestaRS testService3();
 }

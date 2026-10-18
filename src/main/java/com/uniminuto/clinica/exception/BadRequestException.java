@@ -1,23 +1,21 @@
 package com.uniminuto.clinica.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Excepción personalizada para manejar errores de solicitud incorrecta (Bad Request).
- * Retorna automáticamente un código HTTP 400 Bad Request al cliente.
- *
- * @author Yulian Estefanía Montealegre
+ * Excepción para solicitudes inválidas: campos obligatorios vacíos, valores fuera de rango
+ * o referencias a registros que no existen dentro del cuerpo de la petición.
+ * Se traduce a HTTP 400 (Bad Request) en {@link GlobalExceptionHandler}.
  */
-@ResponseStatus(HttpStatus.BAD_REQUEST)
 public class BadRequestException extends RuntimeException {
 
+    /** Código HTTP asociado a la excepción (siempre 400). */
     private final HttpStatus status;
 
     /**
-     * Constructor con mensaje descriptivo del error.
+     * Crea la excepción con un mensaje comprensible para el usuario final.
      *
-     * @param message Mensaje explicativo del error de validación.
+     * @param message descripción del problema detectado en la solicitud
      */
     public BadRequestException(String message) {
         super(message);
@@ -25,9 +23,9 @@ public class BadRequestException extends RuntimeException {
     }
 
     /**
-     * Obtiene el estado HTTP asociado a la excepción.
+     * Obtiene el código HTTP asociado.
      *
-     * @return HttpStatus código 400.
+     * @return {@link HttpStatus#BAD_REQUEST}
      */
     public HttpStatus getStatus() {
         return status;

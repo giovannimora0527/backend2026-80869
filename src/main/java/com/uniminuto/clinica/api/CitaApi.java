@@ -1,68 +1,88 @@
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.Cita;
-import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.CitaResumenRs;
 import com.uniminuto.clinica.models.CitaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PaginaRs;
+import com.uniminuto.clinica.models.filtro.CitaFiltro;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Interfaz que define los endpoints REST para la gestión y agendamiento de Citas Médicas.
- *
- * @author Yulian Estefanía Montealegre
+ * Contrato REST de citas médicas. Ruta base: {@code /cita}.
  */
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/cita")
 public interface CitaApi {
 
     /**
-     * Lista todas las citas médicas registradas en el sistema.
+     * {@code GET /cita/listar}: lista todas las citas (fecha y hora descendente), sin paginar.
      *
-     * @return Lista de entidades Cita.
-     * @throws BadRequestException Si ocurre un error en la petición.
+     * @return 200 con la lista de citas
      */
-    @GetMapping(value = "/listar", produces = "application/json")
-    ResponseEntity<List<Cita>> listarCitas() throws BadRequestException;
+    @GetMapping("/listar")
+    ResponseEntity<List<Cita>> listarCitas();
 
     /**
-     * Lista las citas médicas comprendidas dentro de un rango de fechas.
+     * {@code GET /cita/paginado}: listado resumido para el DataTable. Parámetros opcionales:
+     * {@code page, size, sortBy, sortDir, texto, estado, clienteId, mascotaId, medicoId, fechaDesde, fechaHasta}.
      *
-     * @param fechaInicio Fecha y hora inicial del filtro.
-     * @param fechaFin Fecha y hora final del filtro.
-     * @return Lista de citas dentro del rango.
-     * @throws BadRequestException Si los parámetros de fecha son incorrectos.
+     * @param filtro filtros y paginación enlazados desde la query string
+     * @return 200 con la página de citas resumidas, o 400 si algún parámetro no es válido
      */
-    @GetMapping(value = "/listar-rango", produces = "application/json")
-    ResponseEntity<List<Cita>> listarCitasRango(
-            @RequestParam LocalDateTime fechaInicio,
-            @RequestParam LocalDateTime fechaFin
-    ) throws BadRequestException;
+    @GetMapping("/paginado")
+    ResponseEntity<PaginaRs<CitaResumenRs>> listarCitasPaginado(@ModelAttribute CitaFiltro filtro);
 
     /**
-     * Crea una nueva cita médica.
+     * {@code GET /cita/consultar/{id}}: detalle de una cita.
      *
-     * @param cita Objeto DTO con los datos de la nueva cita.
-     * @return Respuesta estandarizada con el resultado del registro.
-     * @throws BadRequestException Si los datos obligatorios no son válidos.
+     * @param id identificador de la cita
+     * @return 200 con la cita, o 404 si no existe
      */
-    @PostMapping(value = "/crear", produces = "application/json", consumes = "application/json")
-    ResponseEntity<MiRespuestaRS> crearCita(
-            @RequestBody CitaRq cita
-    ) throws BadRequestException;
+    @GetMapping("/consultar/{id}")
+    ResponseEntity<Cita> consultarCita(@PathVariable("id") Long id);
 
     /**
-     * Actualiza una cita médica existente.
+     * {@code POST /cita/guardar}: registra una cita nueva.
      *
-     * @param cita Objeto DTO con los datos actualizados.
-     * @return Respuesta estandarizada con el resultado de la actualización.
-     * @throws BadRequestException Si ocurre un error de validación.
+     * @param rq datos de la cita
+     * @return 201 con el resultado, 400 por datos inválidos o 409 si el horario no está disponible
      */
-    @PostMapping(value = "/actualizar", produces = "application/json", consumes = "application/json")
-    ResponseEntity<MiRespuestaRS> actualizarCita(
-            @RequestBody CitaRq cita
-    ) throws BadRequestException;
+    @PostMapping("/guardar")
+    ResponseEntity<MiRespuestaRS> crearCita(@RequestBody CitaRq rq);
+
+    /**
+     * {@code PUT /cita/actualizar/{id}}: edita una cita activa.
+     *
+     * @param id identificador de la cita
+     * @param rq nuevos datos
+     * @return 200 con el resultado, 404 si no existe, 409 si está atendida, cancelada o el horario no está libre
+     */
+    @PutMapping("/actualizar/{id}")
+    ResponseEntity<MiRespuestaRS> actualizarCita(@PathVariable("id") Long id, @RequestBody CitaRq rq);
+
+    /**
+     * {@code PATCH /cita/cancelar/{id}}: cancela una cita activa (no se elimina físicamente).
+     *
+     * @param id identificador de la cita
+     * @return 200 con el resultado, 404 si no existe, 409 si está atendida o ya cancelada
+     */
+    @PatchMapping("/cancelar/{id}")
+    ResponseEntity<MiRespuestaRS> cancelarCita(@PathVariable("id") Long id);
+
+    /**
+     * {@code PATCH /cita/reactivar/{id}}: reactiva una cita cancelada (operación explícita).
+     *
+     * @param id identificador de la cita
+     * @return 200 con el resultado, 404 si no existe, 409 si no está cancelada, ya pasó o el horario no está libre
+     */
+    @PatchMapping("/reactivar/{id}")
+    ResponseEntity<MiRespuestaRS> reactivarCita(@PathVariable("id") Long id);
 }

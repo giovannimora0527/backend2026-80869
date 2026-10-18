@@ -1,38 +1,36 @@
 package com.uniminuto.clinica.models;
 
-import jakarta.validation.constraints.NotNull; // <-- Cambia javax por jakarta aquí
-import java.time.LocalDateTime;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
- * Clase que representa la solicitud (Request DTO) para el registro de una Historia Médica.
- *
- * @author Yulian Estephania
- * @version 1.0
+ * Datos recibidos para crear una historia clínica a partir de una cita atendida.
  */
 @Data
 public class HistoriaMedicaRq {
 
-    @NotNull(message = "El ID del cliente es obligatorio")
+    /** Cliente propietario de la mascota. */
     private Long clienteId;
 
-    @NotNull(message = "El ID de la mascota es obligatorio")
-    private Long mascotaId;
+    /** Mascota de la historia; debe pertenecer al cliente. */
+    private Integer mascotaId;
 
-    @NotNull(message = "El ID de la cita es obligatorio")
+    /** Cita atendida que origina la historia; debe ser de la misma mascota. */
     private Long citaId;
 
-    @NotNull(message = "El ID del médico es obligatorio")
+    /** Veterinario responsable; opcional, por defecto el de la cita. */
     private Long medicoId;
 
-    @NotNull(message = "La fecha y hora son obligatorias")
+    /** Fecha y hora de la consulta; opcional, por defecto la actual. */
     private LocalDateTime fechaHora;
 
-    @NotNull(message = "El motivo de consulta es obligatorio")
-    private String motivoConsulta;
+    /** Motivo de la consulta. */
+    private String motivo;
 
-    @NotNull(message = "El diagnóstico es obligatorio")
+    /** Diagnóstico de la consulta. */
     private String diagnostico;
 
+    /** Observaciones adicionales. */
     private String observaciones;
 }

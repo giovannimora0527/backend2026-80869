@@ -2,51 +2,37 @@ package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.RazaApi;
 import com.uniminuto.clinica.entity.Raza;
-import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
 import com.uniminuto.clinica.service.RazaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 /**
- * Controlador REST que implementa los endpoints definidos en RazaApi
- * para la gestión y administración de razas de mascotas.
- *
- * @author Yulian Estefanía Montealegre
+ * Controlador REST de razas. Solo traduce HTTP ↔ servicio.
  */
 @RestController
-@RequestMapping("/razas")
+@RequestMapping("/raza")
 public class RazaApiController implements RazaApi {
 
+    /** Servicio con la lógica de negocio de las razas. */
     @Autowired
     private RazaService razaService;
 
-    /**
-     * Registra una nueva raza en el sistema.
-     *
-     * @param razaRq Objeto DTO con los datos de la raza.
-     * @return Respuesta estandarizada con el resultado.
-     * @throws BadRequestException Si los datos son inválidos o la raza ya existe.
-     */
-    @PostMapping
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<MiRespuestaRS> guardarRaza(@RequestBody RazaRq razaRq) throws BadRequestException {
-        return ResponseEntity.ok(this.razaService.crearRazaNueva(razaRq));
+    public ResponseEntity<List<Raza>> listarRazas() {
+        return ResponseEntity.ok(razaService.listarRazas());
     }
 
-    /**
-     * Obtiene el listado completo de razas registradas.
-     *
-     * @return Lista de entidades Raza.
-     * @throws BadRequestException Si ocurre un error en la consulta.
-     */
-    @GetMapping
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<List<Raza>> listarRazas() throws BadRequestException {
-        return ResponseEntity.ok(this.razaService.listarRazas());
+    public ResponseEntity<MiRespuestaRS> guardarRaza(RazaRq razaRq) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(razaService.crearRazaNueva(razaRq));
     }
 }

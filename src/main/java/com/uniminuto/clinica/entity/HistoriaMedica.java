@@ -1,85 +1,69 @@
 package com.uniminuto.clinica.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
- * Representa la entidad Historia Médica en la base de datos de la clínica veterinaria.
- * Almacena el historial clínico detallado de las atenciones brindadas a las mascotas,
- * vinculando la cita, el paciente, el médico tratante y los detalles diagnósticos.
- *
- * @author Yulian Estefania
- * @version 1.0
+ * Historia clínica de una consulta: nace de una cita atendida (una historia por cita) y
+ * agrupa las anotaciones de seguimiento de la mascota.
  */
 @Entity
 @Table(name = "historia_medica")
 @Data
 public class HistoriaMedica {
 
-    /**
-     * Identificador único de la historia médica (Clave primaria autoincremental).
-     */
+    /** Identificador de la historia. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    /**
-     * Mascota (paciente) asociada a esta historia médica.
-     */
-    @ManyToOne
-    @JoinColumn(name = "paciente_id", nullable = false)
+    /** Cliente propietario de la mascota. */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "cliente_id", nullable = false)
+    private Cliente cliente;
+
+    /** Mascota a la que pertenece la historia. */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "mascota_id", nullable = false)
     private Mascota mascota;
 
-    /**
-     * Cita médica que originó la atención y generación de la historia clínica.
-     */
-    @ManyToOne
+    /** Cita atendida que originó la historia (única por historia). */
+    @ManyToOne(optional = false)
     @JoinColumn(name = "cita_id", nullable = false)
     private Cita cita;
 
-    /**
-     * Médico veterinario responsable de la atención y diagnóstico.
-     */
-    @ManyToOne
+    /** Veterinario responsable de la consulta. */
+    @ManyToOne(optional = false)
     @JoinColumn(name = "medico_id", nullable = false)
     private Medico medico;
 
-    /**
-     * Fecha y hora en la que se llevó a cabo la consulta.
-     */
-    @Column(name = "fecha_hora", nullable = false)
-    private LocalDateTime fechaHora;
+    /** Fecha y hora de la consulta. */
+    @Column(name = "fecha_creacion", nullable = false)
+    private LocalDateTime fechaCreacion;
 
-    /**
-     * Motivo principal de la consulta reportado por el propietario.
-     */
-    @Column(name = "motivo_consulta", nullable = false, columnDefinition = "TEXT")
-    private String motivoConsulta;
+    /** Motivo de la consulta. */
+    @Column(name = "motivo", nullable = false, columnDefinition = "TEXT")
+    private String motivo;
 
-    /**
-     * Diagnóstico clínico emitido por el médico veterinario.
-     */
+    /** Diagnóstico de la consulta. */
     @Column(name = "diagnostico", nullable = false, columnDefinition = "TEXT")
     private String diagnostico;
 
-    /**
-     * Observaciones adicionales, recomendaciones o tratamientos recetados.
-     */
+    /** Observaciones adicionales; opcional. */
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones;
 
-    /**
-     * Estado actual del registro de la historia médica (Ej. ACTIVA, CERRADA).
-     */
-    @Column(name = "estado", length = 20)
+    /** Estado almacenado como etiqueta (Abierta o Cerrada), ver {@link com.uniminuto.clinica.enums.EstadoHistoria}. */
+    @Column(name = "estado", nullable = false, length = 20)
     private String estado;
-
-    /**
-     * Fecha y hora exacta en la que se creó el registro en el sistema.
-     */
-    @Column(name = "fecha_creacion", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime fechaCreacion;
 }

@@ -1,49 +1,68 @@
 package com.uniminuto.clinica.api;
 
+import com.uniminuto.clinica.entity.HistoriaMedica;
 import com.uniminuto.clinica.models.HistoriaMedicaRq;
+import com.uniminuto.clinica.models.HistoriaResumenRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
+import com.uniminuto.clinica.models.PaginaRs;
+import com.uniminuto.clinica.models.filtro.HistoriaFiltro;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 /**
- * Contrato de la API REST para la gestión de Historias Médicas.
- *
- * @author Yulian Estephania
- * @version 1.0
+ * Contrato REST de historias clínicas. Ruta base: {@code /historia-medica}.
  */
-@Tag(name = "Historia Médica", description = "Endpoints para la gestión de historias clínicas")
-@RequestMapping("/historia-medica")
 public interface HistoriaMedicaApi {
 
     /**
-     * Lista las historias médicas ordenadas por fecha y hora DESC.
+     * {@code GET /historia-medica/listar}: lista todas las historias (fecha descendente), sin paginar.
      *
-     * @return ResponseEntity con la lista de historias.
+     * @return 200 con la lista de historias
      */
-    @Operation(summary = "Listar historias médicas", description = "Retorna el listado ordenado por fechaHora DESC")
     @GetMapping("/listar")
-    ResponseEntity<MiRespuestaRS> listar();
+    ResponseEntity<List<HistoriaMedica>> listarHistorias();
 
     /**
-     * Busca una historia médica por su ID.
+     * {@code GET /historia-medica/paginado}: listado resumido para el DataTable. Parámetros opcionales:
+     * {@code page, size, sortBy, sortDir, texto, estado, clienteId, mascotaId, medicoId, citaId, fechaDesde, fechaHasta}.
      *
-     * @id Identificador de la historia.
-     * @return ResponseEntity con la historia encontrada o 404.
+     * @param filtro filtros y paginación enlazados desde la query string
+     * @return 200 con la página de historias resumidas, o 400 si algún parámetro no es válido
      */
-    @Operation(summary = "Buscar historia médica", description = "Busca una historia por ID")
-    @GetMapping("/buscar/{id}")
-    ResponseEntity<MiRespuestaRS> buscarPorId(@PathVariable Long id);
+    @GetMapping("/paginado")
+    ResponseEntity<PaginaRs<HistoriaResumenRs>> listarHistoriasPaginado(@ModelAttribute HistoriaFiltro filtro);
 
     /**
-     * Guarda una nueva historia médica tras validar reglas de negocio.
+     * {@code GET /historia-medica/consultar/{id}}: detalle completo de una historia.
      *
-     * @request Datos de la historia clínica.
-     * @return ResponseEntity con la historia creada.
+     * @param id identificador de la historia
+     * @return 200 con la historia, o 404 si no existe
      */
-    @Operation(summary = "Guardar historia médica", description = "Crea una historia asociada a una cita ATENDIDA")
+    @GetMapping("/consultar/{id}")
+    ResponseEntity<HistoriaMedica> consultarHistoria(@PathVariable("id") Long id);
+
+    /**
+     * {@code POST /historia-medica/guardar}: crea la historia clínica de una cita atendida.
+     *
+     * @param rq datos de la historia
+     * @return 201 con el resultado, 400 por datos inválidos o 409 si la cita no está atendida o ya tiene historia
+     */
     @PostMapping("/guardar")
-    ResponseEntity<MiRespuestaRS> guardar(@Valid @RequestBody HistoriaMedicaRq request);
+    ResponseEntity<MiRespuestaRS> crearHistoria(@RequestBody HistoriaMedicaRq rq);
+
+    /**
+     * {@code PATCH /historia-medica/cerrar/{id}}: cierra una historia clínica.
+     *
+     * @param id identificador de la historia
+     * @return 200 con el resultado, 404 si no existe, 409 si ya está cerrada
+     */
+    @PatchMapping("/cerrar/{id}")
+    ResponseEntity<MiRespuestaRS> cerrarHistoria(@PathVariable("id") Long id);
 }

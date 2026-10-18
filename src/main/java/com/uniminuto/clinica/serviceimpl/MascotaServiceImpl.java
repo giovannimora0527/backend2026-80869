@@ -4,224 +4,176 @@ import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Raza;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.exception.ConflictException;
+import com.uniminuto.clinica.exception.ResourceNotFoundException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.RazaRepository;
 import com.uniminuto.clinica.service.MascotaService;
+import com.uniminuto.clinica.util.TextoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * Implementación de la lógica de negocio para la gestión de Mascotas.
- * Maneja consultas, registros y actualizaciones de pacientes veterinarios.
- *
- * @author Yulian Estefanía Montealegre
+ * Implementación del servicio de mascotas. Toda mascota pertenece a un cliente existente y a una
+ * raza existente; una mascota con citas no puede cambiar de dueño (se perdería la coherencia
+ * cliente → mascota → cita).
  */
 @Service
 public class MascotaServiceImpl implements MascotaService {
 
+    /** Acceso a datos de mascotas. */
     @Autowired
     private MascotaRepository mascotaRepository;
 
+    /** Acceso a datos de clientes. */
     @Autowired
     private ClienteRepository clienteRepository;
 
+    /** Acceso a datos de razas. */
     @Autowired
     private RazaRepository razaRepository;
 
+    /** Acceso a datos de citas (para proteger el cambio de dueño). */
+    @Autowired
+    private CitaRepository citaRepository;
+
     /**
-     * Obtiene el listado completo de mascotas ordenadas alfabéticamente por nombre.
-     *
-     * @return Lista de mascotas.
+     * {@inheritDoc}
      */
     @Override
     public List<Mascota> listarMascotas() {
-        List<Mascota> mascotas = mascotaRepository.findAll();
-        mascotas.sort((m1, m2) -> m1
-                .getNombreMascota()
-                .compareToIgnoreCase(m2.getNombreMascota()));
-        return mascotas;
+        return mascotaRepository.findAllByOrderByNombreMascotaAsc();
     }
 
     /**
-     * Obtiene el listado de mascotas ordenadas de forma ascendente o descendente.
-     *
-     * @param ascendente Booleano para el orden.
-     * @return Lista de mascotas ordenadas.
+     * {@inheritDoc}
      */
     @Override
-    public List<Mascota> listarMascotasOrdenado(boolean ascendente) {
-        List<Mascota> mascotas;
-        if (ascendente) {
-            mascotas = mascotaRepository.findAllByOrderByNombreMascotaAsc();
-        } else {
-            mascotas = mascotaRepository.findAllByOrderByNombreMascotaDesc();
-        }
-        return mascotas;
+    public Mascota consultarMascota(Integer id) {
+        return mascotaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("La mascota con ID " + id + " no existe"));
     }
 
     /**
-     * Busca una mascota por su nombre exacto.
-     *
-     * @param nombreMascota Nombre de la mascota.
-     * @return Optional con la mascota encontrada.
+     * {@inheritDoc}
      */
     @Override
-    public Optional<Mascota> findByNombreMascota(String nombreMascota) {
-        return Optional.ofNullable(mascotaRepository.findByNombreMascota(nombreMascota));
+    public List<Mascota> buscarMascotasPorNombre(String nombre) {
+        if (TextoUtil.estaVacio(nombre)) {
+            throw new BadRequestException("El nombre a buscar no puede estar vacío");
+        }
+        return mascotaRepository.findByNombreMascotaContainingIgnoreCaseOrderByNombreMascotaAsc(nombre.trim());
     }
 
     /**
-     * Busca mascotas asociadas a un cliente propietario específico.
-     *
-     * @param clienteId Identificador del cliente.
-     * @return Lista de mascotas del cliente.
-     * @throws BadRequestException Si el ID es nulo o el cliente no existe.
+     * {@inheritDoc}
      */
     @Override
-    public List<Mascota> buscarMascotasPorCliente(Long clienteId) throws BadRequestException {
-        if (clienteId == null) {
-            throw new BadRequestException("El ID del cliente no puede ser nulo.");
-        }
-
-        Optional<Cliente> optCliente = this.clienteRepository.findById(clienteId);
-        if (optCliente.isEmpty()) {
-            throw new BadRequestException("El cliente con ID " + clienteId + " no existe.");
-        }
-
-        return this.mascotaRepository.findByClienteOrderByNombreMascotaAsc(optCliente.get());
+    public List<Mascota> buscarMascotasPorCliente(Long clienteId) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new ResourceNotFoundException("El cliente con ID " + clienteId + " no existe"));
+        return mascotaRepository.findByClienteOrderByNombreMascotaAsc(cliente);
     }
 
     /**
-     * Busca mascotas pertenecientes a una raza específica.
-     *
-     * @param razaId Identificador de la raza.
-     * @return Lista de mascotas de dicha raza.
-     * @throws BadRequestException Si el ID es nulo o la raza no existe.
+     * {@inheritDoc}
      */
     @Override
-    public List<Mascota> buscarMascotasPorRaza(Integer razaId) throws BadRequestException {
-        if (razaId == null) {
-            throw new BadRequestException("El ID de la raza no puede ser nulo.");
-        }
-
-        Optional<Raza> optRaza = this.razaRepository.findById(razaId);
-        if (optRaza.isEmpty()) {
-            throw new BadRequestException("La raza con ID " + razaId + " no existe.");
-        }
-
-        return this.mascotaRepository.findByRazaOrderByNombreMascotaAsc(optRaza.get());
+    public List<Mascota> buscarMascotasPorRaza(Integer razaId) {
+        Raza raza = razaRepository.findById(razaId)
+                .orElseThrow(() -> new ResourceNotFoundException("La raza con ID " + razaId + " no existe"));
+        return mascotaRepository.findByRazaOrderByNombreMascotaAsc(raza);
     }
 
     /**
-     * Registra una nueva mascota validando la existencia de la raza y el cliente.
+     * {@inheritDoc}
      *
-     * @param mascotaRq Datos de la mascota a registrar.
-     * @return Respuesta estandarizada con el resultado.
-     * @throws BadRequestException Si la validación falla.
+     * @throws BadRequestException si faltan datos o el cliente o la raza no existen
      */
     @Override
-    public MiRespuestaRS guardarMascota(MascotaRq mascotaRq) throws BadRequestException {
-        try {
-            this.validarMascotaRq(mascotaRq);
-        } catch (BadRequestException e) {
-            throw new BadRequestException("Error al validar la mascota: " + e.getMessage());
-        }
-
-        Optional<Raza> optRaza = this.razaRepository.findById(mascotaRq.getRazaId());
-        if (optRaza.isEmpty()) {
-            throw new BadRequestException("La raza con ID " + mascotaRq.getRazaId() + " no existe.");
-        }
-
-        Optional<Cliente> optCliente = this.clienteRepository.findById(mascotaRq.getClienteId());
-        if (optCliente.isEmpty()) {
-            throw new BadRequestException("El cliente con ID " + mascotaRq.getClienteId() + " no existe.");
-        }
+    @Transactional
+    public MiRespuestaRS guardarMascota(MascotaRq rq) {
+        validarMascotaRq(rq);
+        Raza raza = razaRepository.findById(rq.getRazaId())
+                .orElseThrow(() -> new BadRequestException("La raza con ID " + rq.getRazaId() + " no existe"));
+        Cliente cliente = clienteRepository.findById(rq.getClienteId())
+                .orElseThrow(() -> new BadRequestException("El cliente con ID " + rq.getClienteId() + " no existe"));
 
         Mascota nueva = new Mascota();
-        nueva.setNombreMascota(mascotaRq.getNombre());
-        nueva.setEdad(mascotaRq.getEdad());
-        nueva.setCliente(optCliente.get());
-        nueva.setRaza(optRaza.get());
+        nueva.setNombreMascota(rq.getNombre().trim());
+        nueva.setEdad(rq.getEdad());
+        nueva.setCliente(cliente);
+        nueva.setRaza(raza);
         nueva.setFechaRegistro(LocalDateTime.now());
+        Mascota guardada = mascotaRepository.save(nueva);
 
-        this.mascotaRepository.save(nueva);
-
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Mascota guardada correctamente.");
-        return respuesta;
+        return MiRespuestaRS.of(HttpStatus.CREATED.value(), "Mascota guardada correctamente",
+                guardada.getMascotaId().longValue());
     }
 
     /**
-     * Valida los campos obligatorios del objeto DTO de mascota.
+     * {@inheritDoc}
      *
-     * @param mascotaRq DTO a validar.
-     * @throws BadRequestException Si algún campo obligatorio está ausente.
-     */
-    private void validarMascotaRq(MascotaRq mascotaRq) throws BadRequestException {
-        if (mascotaRq == null) {
-            throw new BadRequestException("El objeto de entrada no puede ser nulo.");
-        }
-        if (mascotaRq.getNombre() == null || mascotaRq.getNombre().trim().isEmpty()) {
-            throw new BadRequestException("El nombre de la mascota no puede ser nulo o vacío.");
-        }
-        if (mascotaRq.getClienteId() == null) {
-            throw new BadRequestException("El ID del cliente de entrada no es válido.");
-        }
-        if (mascotaRq.getRazaId() == null) {
-            throw new BadRequestException("El ID de la raza de entrada no es válido.");
-        }
-    }
-
-    /**
-     * Actualiza la información de una mascota existente.
-     *
-     * @param mascotaRq Datos actualizados.
-     * @return Respuesta estandarizada con el resultado.
-     * @throws BadRequestException Si la mascota, cliente o raza no existen.
+     * @throws ResourceNotFoundException si la mascota no existe
+     * @throws BadRequestException       si faltan datos o el cliente o la raza no existen
+     * @throws ConflictException         si se intenta cambiar el dueño de una mascota que ya tiene citas
      */
     @Override
-    public MiRespuestaRS actualizarMascota(MascotaRq mascotaRq) throws BadRequestException {
-        try {
-            this.validarMascotaRq(mascotaRq);
-        } catch (BadRequestException e) {
-            throw new BadRequestException("Error al validar la mascota: " + e.getMessage());
+    @Transactional
+    public MiRespuestaRS actualizarMascota(Integer id, MascotaRq rq) {
+        Mascota existente = consultarMascota(id);
+        validarMascotaRq(rq);
+        Raza raza = razaRepository.findById(rq.getRazaId())
+                .orElseThrow(() -> new BadRequestException("La raza con ID " + rq.getRazaId() + " no existe"));
+        Cliente cliente = clienteRepository.findById(rq.getClienteId())
+                .orElseThrow(() -> new BadRequestException("El cliente con ID " + rq.getClienteId() + " no existe"));
+
+        boolean cambiaDeDueno = !cliente.getId().equals(existente.getCliente().getId());
+        if (cambiaDeDueno && citaRepository.existeCitaDeLaMascota(existente.getMascotaId())) {
+            throw new ConflictException("La mascota ya tiene citas registradas; no se puede cambiar de propietario");
         }
 
-        Optional<Raza> optRaza = this.razaRepository.findById(mascotaRq.getRazaId());
-        if (optRaza.isEmpty()) {
-            throw new BadRequestException("La raza con ID " + mascotaRq.getRazaId() + " no existe.");
-        }
-
-        Optional<Cliente> optCliente = this.clienteRepository.findById(mascotaRq.getClienteId());
-        if (optCliente.isEmpty()) {
-            throw new BadRequestException("El cliente con ID " + mascotaRq.getClienteId() + " no existe.");
-        }
-
-        Optional<Mascota> optMascota = this.mascotaRepository.findById(mascotaRq.getMascotaId());
-        if (optMascota.isEmpty()) {
-            throw new BadRequestException("La mascota con ID " + mascotaRq.getMascotaId() + " no existe.");
-        }
-
-        Mascota existente = optMascota.get();
-        existente.setNombreMascota(mascotaRq.getNombre());
-        existente.setEdad(mascotaRq.getEdad());
-        existente.setCliente(optCliente.get());
-        existente.setRaza(optRaza.get());
+        existente.setNombreMascota(rq.getNombre().trim());
+        existente.setEdad(rq.getEdad());
+        existente.setCliente(cliente);
+        existente.setRaza(raza);
         existente.setFechaModificacion(LocalDateTime.now());
+        mascotaRepository.save(existente);
 
-        this.mascotaRepository.save(existente);
+        return MiRespuestaRS.of(HttpStatus.OK.value(), "Mascota actualizada correctamente",
+                existente.getMascotaId().longValue());
+    }
 
-        MiRespuestaRS respuesta = new MiRespuestaRS();
-        respuesta.setStatus(200);
-        respuesta.setMessage("Mascota actualizada correctamente.");
-        return respuesta;
+    /**
+     * Valida los campos obligatorios de una mascota.
+     *
+     * @param rq solicitud a validar
+     * @throws BadRequestException si falta algún dato o la edad es negativa
+     */
+    private void validarMascotaRq(MascotaRq rq) {
+        if (rq == null) {
+            throw new BadRequestException("Los datos de la mascota son obligatorios");
+        }
+        if (TextoUtil.estaVacio(rq.getNombre())) {
+            throw new BadRequestException("El nombre de la mascota es obligatorio");
+        }
+        if (rq.getEdad() == null || rq.getEdad() < 0) {
+            throw new BadRequestException("La edad de la mascota es obligatoria y no puede ser negativa");
+        }
+        if (rq.getClienteId() == null) {
+            throw new BadRequestException("El cliente propietario es obligatorio");
+        }
+        if (rq.getRazaId() == null) {
+            throw new BadRequestException("La raza es obligatoria");
+        }
     }
 }

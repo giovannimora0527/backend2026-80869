@@ -2,36 +2,20 @@ package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.Medicamento;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
 /**
- * Contrato API REST para la gestión y consulta de Medicamentos.
- *
- * @author Yulian Estephania Montealegre
+ * Contrato REST de consulta de medicamentos. Ruta base: {@code /medicamento}.
  */
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/medicamento")
 public interface MedicamentoApi {
 
     /**
-     * Endpoint para listar todos los medicamentos disponibles.
+     * {@code GET /medicamento/listar}: lista los medicamentos ordenados por nombre.
      *
-     * @return Lista de medicamentos en formato JSON.
+     * @return 200 con la lista de medicamentos
      */
-    @GetMapping(value = "/listar", produces = {"application/json"})
+    @GetMapping("/listar")
     ResponseEntity<List<Medicamento>> listarMedicamentos();
-
-    /**
-     * Endpoint para buscar un medicamento por su ID.
-     *
-     * @param id ID del medicamento.
-     * @return Entidad del medicamento encontrado.
-     */
-    @GetMapping(value = "/buscar/{id}", produces = {"application/json"})
-    ResponseEntity<Medicamento> buscarMedicamentoPorId(@PathVariable Long id);
 }

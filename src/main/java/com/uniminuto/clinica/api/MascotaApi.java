@@ -1,96 +1,84 @@
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.Mascota;
-import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
 /**
- * API para la gestión de mascotas.
- * Define los endpoints REST para registrar, consultar y actualizar pacientes.
- *
- * @author Yulian Estefanía Montealegre
+ * Contrato REST de mascotas. Ruta base: {@code /mascota}.
  */
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/mascota")
 public interface MascotaApi {
 
     /**
-     * Obtiene el listado completo de mascotas registradas.
+     * {@code GET /mascota/listar}: lista todas las mascotas ordenadas por nombre.
      *
-     * @return Lista de mascotas.
-     * @throws BadRequestException Si ocurre un error en la solicitud.
+     * @return 200 con la lista de mascotas
      */
-    @GetMapping(value = "/listar", produces = {"application/json"})
-    ResponseEntity<List<Mascota>> listarMascotas() throws BadRequestException;
+    @GetMapping("/listar")
+    ResponseEntity<List<Mascota>> listarMascotas();
 
     /**
-     * Obtiene el listado de mascotas ordenadas de forma ascendente o descendente.
+     * {@code GET /mascota/consultar/{id}}: consulta una mascota.
      *
-     * @param ascendente Booleano que indica el sentido del ordenamiento.
-     * @return Lista de mascotas ordenadas.
-     * @throws BadRequestException Si ocurre un error en la solicitud.
+     * @param id identificador de la mascota
+     * @return 200 con la mascota, o 404 si no existe
      */
-    @GetMapping(value = "/listar-ordenado", produces = {"application/json"})
-    ResponseEntity<List<Mascota>> listarMascotasOrdenado(
-            @RequestParam boolean ascendente) throws BadRequestException;
+    @GetMapping("/consultar/{id}")
+    ResponseEntity<Mascota> consultarMascota(@PathVariable("id") Integer id);
 
     /**
-     * Busca mascotas que coincidan parcialmente con un nombre.
+     * {@code GET /mascota/buscar?nombre=}: busca mascotas por fragmento del nombre.
      *
-     * @param nombre Nombre o fragmento del nombre de la mascota.
-     * @return Lista de mascotas encontradas.
-     * @throws BadRequestException Si el parámetro es nulo o inválido.
+     * @param nombre texto a buscar
+     * @return 200 con las mascotas que coinciden
      */
-    @GetMapping(value = "/buscar-nombre", produces = {"application/json"})
-    ResponseEntity<List<Mascota>> buscarMascotaPorNombre(
-            @RequestParam String nombre) throws BadRequestException;
+    @GetMapping("/buscar")
+    ResponseEntity<List<Mascota>> buscarMascotaPorNombre(@RequestParam("nombre") String nombre);
 
     /**
-     * Busca las mascotas asociadas a un cliente propietario específico.
+     * {@code GET /mascota/buscarPorCliente?clienteId=}: lista solo las mascotas de un cliente
+     * (alimenta el combo dependiente Cliente → Mascota).
      *
-     * @param clienteId Identificador único del cliente.
-     * @return Lista de mascotas del cliente.
-     * @throws BadRequestException Si el ID del cliente no es válido.
+     * @param clienteId identificador del cliente
+     * @return 200 con las mascotas del cliente, o 404 si el cliente no existe
      */
-    @GetMapping(value = "/buscar-by-cliente", produces = {"application/json"})
-    ResponseEntity<List<Mascota>> buscarMascotaPorCliente(
-            @RequestParam Long clienteId) throws BadRequestException;
+    @GetMapping("/buscarPorCliente")
+    ResponseEntity<List<Mascota>> buscarMascotaPorCliente(@RequestParam("clienteId") Long clienteId);
 
     /**
-     * Busca las mascotas pertenecientes a una raza específica.
+     * {@code GET /mascota/buscarPorRaza?razaId=}: lista las mascotas de una raza.
      *
-     * @param razaId Identificador de la raza.
-     * @return Lista de mascotas de dicha raza.
-     * @throws BadRequestException Si el ID de raza no es válido.
+     * @param razaId identificador de la raza
+     * @return 200 con las mascotas de la raza, o 404 si la raza no existe
      */
-    @GetMapping(value = "/buscar-by-raza", produces = {"application/json"})
-    ResponseEntity<List<Mascota>> buscarMascotaPorRaza(
-            @RequestParam Integer razaId) throws BadRequestException;
+    @GetMapping("/buscarPorRaza")
+    ResponseEntity<List<Mascota>> buscarMascotaPorRaza(@RequestParam("razaId") Integer razaId);
 
     /**
-     * Registra una nueva mascota en el sistema.
+     * {@code POST /mascota/guardar}: registra una mascota.
      *
-     * @param mascotaRq Datos de la mascota a registrar.
-     * @return Respuesta estandarizada con el resultado de la operación.
-     * @throws BadRequestException Si faltan campos obligatorios.
+     * @param rq datos de la mascota
+     * @return 201 con el resultado, o 400 por datos inválidos
      */
-    @PostMapping(value = "/guardar", produces = {"application/json"}, consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> guardarMascota(
-            @RequestBody MascotaRq mascotaRq) throws BadRequestException;
+    @PostMapping("/guardar")
+    ResponseEntity<MiRespuestaRS> guardarMascota(@RequestBody MascotaRq rq);
 
     /**
-     * Actualiza la información de una mascota existente.
+     * {@code PUT /mascota/actualizar/{id}}: actualiza una mascota.
      *
-     * @param mascotaRq Datos actualizados de la mascota.
-     * @return Respuesta estandarizada con el resultado.
-     * @throws BadRequestException Si ocurre un error de validación.
+     * @param id identificador de la mascota
+     * @param rq nuevos datos
+     * @return 200 con el resultado, 404 si no existe, 409 si se cambia el dueño de una mascota con citas
      */
-    @PostMapping(value = "/actualizar", produces = {"application/json"}, consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> actualizarMascota(
-            @RequestBody MascotaRq mascotaRq) throws BadRequestException;
+    @PutMapping("/actualizar/{id}")
+    ResponseEntity<MiRespuestaRS> actualizarMascota(@PathVariable("id") Integer id, @RequestBody MascotaRq rq);
 }

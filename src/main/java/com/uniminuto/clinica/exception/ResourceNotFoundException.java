@@ -1,21 +1,16 @@
 package com.uniminuto.clinica.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 /**
- * Excepción lanzada cuando no se encuentra un recurso solicitado en la base de datos.
- * Retorna automáticamente un código HTTP 404 Not Found al cliente.
- *
- * @author Yulian Estefanía Montealegre
+ * Excepción para recursos que no existen cuando el identificador viaja en la URL
+ * o como parámetro de consulta (por ejemplo {@code GET /cita/consultar/99}).
+ * Se traduce a HTTP 404 (Not Found).
  */
-@ResponseStatus(HttpStatus.NOT_FOUND)
 public class ResourceNotFoundException extends RuntimeException {
 
     /**
-     * Constructor con mensaje descriptivo del recurso faltante.
+     * Crea la excepción con un mensaje comprensible para el usuario.
      *
-     * @param message Mensaje indicando cuál recurso no fue hallado.
+     * @param message descripción del registro que no fue encontrado
      */
     public ResourceNotFoundException(String message) {
         super(message);

@@ -1,53 +1,72 @@
 package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Mascota;
-import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 
-import java.util.Optional;
 import java.util.List;
 
 /**
- * Interfaz que define los servicios de negocio para la gestión de Mascotas.
- *
- * @author Yulian Estefanía Montealegre
+ * Operaciones y reglas de negocio de las mascotas.
  */
 public interface MascotaService {
 
     /**
-     * Obtiene el listado completo de mascotas.
+     * Lista todas las mascotas ordenadas por nombre.
+     *
+     * @return mascotas ordenadas alfabéticamente
      */
     List<Mascota> listarMascotas();
 
     /**
-     * Obtiene el listado de mascotas ordenadas de forma ascendente o descendente.
+     * Consulta una mascota por su identificador.
+     *
+     * @param id identificador de la mascota
+     * @return mascota encontrada
+     * @throws com.uniminuto.clinica.exception.ResourceNotFoundException si no existe
      */
-    List<Mascota> listarMascotasOrdenado(boolean ascendente);
+    Mascota consultarMascota(Integer id);
 
     /**
-     * Busca una mascota por su nombre.
+     * Busca mascotas cuyo nombre contenga el texto indicado.
+     *
+     * @param nombre fragmento del nombre
+     * @return mascotas que coinciden, ordenadas por nombre
      */
-    Optional<Mascota> findByNombreMascota(String nombreMascota);
+    List<Mascota> buscarMascotasPorNombre(String nombre);
 
     /**
-     * Busca mascotas por ID de cliente propietario.
+     * Lista únicamente las mascotas de un cliente (usado por el combo dependiente Cliente → Mascota).
+     *
+     * @param clienteId identificador del cliente
+     * @return mascotas del cliente ordenadas por nombre
+     * @throws com.uniminuto.clinica.exception.ResourceNotFoundException si el cliente no existe
      */
-    List<Mascota> buscarMascotasPorCliente(Long clienteId) throws BadRequestException;
+    List<Mascota> buscarMascotasPorCliente(Long clienteId);
 
     /**
-     * Busca mascotas por ID de raza.
+     * Lista las mascotas de una raza.
+     *
+     * @param razaId identificador de la raza
+     * @return mascotas de la raza ordenadas por nombre
+     * @throws com.uniminuto.clinica.exception.ResourceNotFoundException si la raza no existe
      */
-    List<Mascota> buscarMascotasPorRaza(Integer razaId) throws BadRequestException;
+    List<Mascota> buscarMascotasPorRaza(Integer razaId);
 
     /**
-     * Guarda una nueva mascota en el sistema.
+     * Registra una mascota nueva.
+     *
+     * @param rq datos de la mascota
+     * @return respuesta 201 con el resultado
      */
-    MiRespuestaRS guardarMascota(MascotaRq mascotaRq) throws BadRequestException;
+    MiRespuestaRS guardarMascota(MascotaRq rq);
 
     /**
-     * Actualiza una mascota existente.
+     * Actualiza los datos de una mascota. No permite cambiar de dueño si la mascota ya tiene citas.
+     *
+     * @param id identificador de la mascota
+     * @param rq nuevos datos
+     * @return respuesta 200 con el resultado
      */
-    MiRespuestaRS actualizarMascota(MascotaRq mascotaRq) throws BadRequestException;
-
+    MiRespuestaRS actualizarMascota(Integer id, MascotaRq rq);
 }

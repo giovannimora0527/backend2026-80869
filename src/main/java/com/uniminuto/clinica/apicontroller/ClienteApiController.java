@@ -2,41 +2,34 @@ package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.ClienteApi;
 import com.uniminuto.clinica.entity.Cliente;
-import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 /**
- * Controlador REST que implementa los endpoints del contrato ClienteApi.
- *
- * @author Yulian Estefanía Montealegre
+ * Controlador REST de consulta de clientes. Solo traduce HTTP ↔ servicio.
  */
 @RestController
-@RequestMapping("/clientes")
+@RequestMapping("/cliente")
 public class ClienteApiController implements ClienteApi {
 
+    /** Servicio de consulta de clientes. */
     @Autowired
     private ClienteService clienteService;
 
+    /** {@inheritDoc} */
     @Override
-    @GetMapping
     public ResponseEntity<List<Cliente>> listarClientes() {
         return ResponseEntity.ok(clienteService.listarClientes());
     }
 
+    /** {@inheritDoc} */
     @Override
-    @GetMapping("/{id}")
-    public ResponseEntity<Cliente> buscarClientePorId(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.buscarClientePorId(id));
-    }
-
-    @Override
-    @PostMapping
-    public ResponseEntity<MiRespuestaRS> guardarCliente(@RequestBody Cliente cliente) {
-        return ResponseEntity.ok(clienteService.guardarCliente(cliente));
+    public ResponseEntity<Cliente> consultarCliente(Long id) {
+        return ResponseEntity.ok(clienteService.consultarCliente(id));
     }
 }

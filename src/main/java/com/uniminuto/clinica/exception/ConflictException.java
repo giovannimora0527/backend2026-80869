@@ -1,21 +1,16 @@
 package com.uniminuto.clinica.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 /**
- * Excepción lanzada cuando ocurre un conflicto de negocio, como solapamiento de horarios de citas.
- * Retorna un código HTTP 409 Conflict.
- *
- * @author Yulian Estephania Montealegre
+ * Excepción para operaciones que chocan con el estado actual de los datos:
+ * citas duplicadas, veterinario no disponible, intentos de modificar información
+ * que ya no es modificable, etc. Se traduce a HTTP 409 (Conflict).
  */
-@ResponseStatus(HttpStatus.CONFLICT)
 public class ConflictException extends RuntimeException {
 
     /**
-     * Constructor con mensaje personalizado.
+     * Crea la excepción con un mensaje comprensible para el usuario.
      *
-     * @param message Mensaje descriptivo del conflicto.
+     * @param message descripción del conflicto detectado
      */
     public ConflictException(String message) {
         super(message);

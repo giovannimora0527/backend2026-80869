@@ -1,27 +1,30 @@
 package com.uniminuto.clinica.models;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
- * DTO para la solicitud de creación de una anotación de historia.
- *
- * @author Yulian Estephania
- * @version 1.0
+ * Datos recibidos para agregar una anotación a una historia clínica existente.
  */
 @Data
 public class AnotacionHistoriaRq {
 
-    @NotNull(message = "El ID de la historia es obligatorio")
+    /** Historia clínica a la que se agrega la anotación. */
     private Long historiaId;
 
-    @NotNull(message = "El ID del médico es obligatorio")
+    /** Veterinario que escribe la anotación. */
     private Long medicoId;
 
-    @NotNull(message = "La descripción es obligatoria")
+    /** Fecha y hora de la anotación; opcional, por defecto la actual. */
+    private LocalDateTime fecha;
+
+    /** Descripción de lo realizado u observado durante el seguimiento. */
     private String descripcion;
 
+    /** Observaciones adicionales del veterinario. */
     private String observacion;
 
-    private String diagnosticoEvolucion;
+    /** Diagnóstico o evolución del paciente. */
+    private String diagnostico;
 }

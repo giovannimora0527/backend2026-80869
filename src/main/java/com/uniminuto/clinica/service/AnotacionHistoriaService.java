@@ -2,30 +2,51 @@ package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.AnotacionHistoria;
 import com.uniminuto.clinica.models.AnotacionHistoriaRq;
+import com.uniminuto.clinica.models.AnotacionResumenRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PaginaRs;
+import com.uniminuto.clinica.models.filtro.AnotacionFiltro;
+
 import java.util.List;
 
 /**
- * Interfaz de servicio para la gestión de anotaciones en las historias clínicas.
- *
- * @author Yulian Estephania Montealegre
- * @version 1.0
+ * Operaciones y reglas de negocio de las anotaciones de las historias clínicas. Las anotaciones
+ * son un registro histórico: solo se crean y se consultan, nunca se editan ni se eliminan.
  */
 public interface AnotacionHistoriaService {
 
     /**
-     * Crea una nueva anotación vinculada a una historia clínica existente.
+     * Lista todas las anotaciones de una historia, de la más reciente a la más antigua (sin paginar).
      *
-     * @param anotacionHistoriaRq Datos de la anotación a registrar.
-     * @return Respuesta estandarizada con el resultado de la operación.
+     * @param historiaId identificador de la historia clínica
+     * @return anotaciones de la historia
+     * @throws com.uniminuto.clinica.exception.ResourceNotFoundException si la historia no existe
      */
-    MiRespuestaRS crearAnotacionHistoria(AnotacionHistoriaRq anotacionHistoriaRq);
+    List<AnotacionHistoria> listarPorHistoria(Long historiaId);
 
     /**
-     * Consulta todas las anotaciones asociadas a una historia clínica específica, ordenadas por fecha DESC.
+     * Lista el histórico de anotaciones de forma resumida con filtros, paginación y ordenamiento.
+     * Por defecto ordena por fecha descendente (de la más reciente a la más antigua).
      *
-     * @param historiaId Identificador de la historia clínica.
-     * @return Lista de anotaciones médicas encontradas.
+     * @param filtro filtros y parámetros de paginación
+     * @return página de anotaciones resumidas
      */
-    List<AnotacionHistoria> listarAnotacionesPorHistoria(Long historiaId);
+    PaginaRs<AnotacionResumenRs> listarAnotacionesPaginado(AnotacionFiltro filtro);
+
+    /**
+     * Consulta el detalle completo de una anotación.
+     *
+     * @param id identificador de la anotación
+     * @return anotación encontrada
+     * @throws com.uniminuto.clinica.exception.ResourceNotFoundException si no existe
+     */
+    AnotacionHistoria consultarAnotacion(Long id);
+
+    /**
+     * Agrega una anotación a una historia clínica abierta.
+     *
+     * @param rq datos de la anotación
+     * @return respuesta 201 con el identificador de la anotación creada
+     */
+    MiRespuestaRS crearAnotacion(AnotacionHistoriaRq rq);
 }

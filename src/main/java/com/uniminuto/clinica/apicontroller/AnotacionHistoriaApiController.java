@@ -3,49 +3,51 @@ package com.uniminuto.clinica.apicontroller;
 import com.uniminuto.clinica.api.AnotacionHistoriaApi;
 import com.uniminuto.clinica.entity.AnotacionHistoria;
 import com.uniminuto.clinica.models.AnotacionHistoriaRq;
+import com.uniminuto.clinica.models.AnotacionResumenRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PaginaRs;
+import com.uniminuto.clinica.models.filtro.AnotacionFiltro;
 import com.uniminuto.clinica.service.AnotacionHistoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 /**
- * Controlador REST que implementa los endpoints definidos en AnotacionHistoriaApi
- * para la gestión de notas, evolución y seguimiento dentro de las historias clínicas.
- *
- * @author Yulian Estefanía Montealegre
- * @version 1.0
+ * Controlador REST de anotaciones de historias clínicas. Solo traduce HTTP ↔ servicio.
  */
 @RestController
-@RequestMapping("/anotaciones")
+@RequestMapping("/anotacion-historia")
 public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
 
+    /** Servicio con la lógica de negocio de las anotaciones. */
     @Autowired
-    private AnotacionHistoriaService anotacionHistoriaService;
+    private AnotacionHistoriaService anotacionService;
 
-    /**
-     * Registra una nueva anotación o nota de evolución en una historia clínica.
-     *
-     * @param anotacionHistoriaRq Objeto DTO con la información de la anotación a crear.
-     * @return Respuesta estandarizada {@link MiRespuestaRS} con el estado de la operación.
-     */
-    @PostMapping
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<MiRespuestaRS> crearAnotacionHistoria(@RequestBody AnotacionHistoriaRq anotacionHistoriaRq) {
-        return ResponseEntity.ok(anotacionHistoriaService.crearAnotacionHistoria(anotacionHistoriaRq));
+    public ResponseEntity<List<AnotacionHistoria>> listarPorHistoria(Long historiaId) {
+        return ResponseEntity.ok(anotacionService.listarPorHistoria(historiaId));
     }
 
-    /**
-     * Obtiene el listado de anotaciones asociadas a una historia clínica específica.
-     *
-     * @param historiaId Identificador único de la historia clínica.
-     * @return Lista de entidades {@link AnotacionHistoria} registradas en dicha historia.
-     */
-    @GetMapping("/historia/{historiaId}")
+    /** {@inheritDoc} */
     @Override
-    public ResponseEntity<List<AnotacionHistoria>> listarPorHistoria(@PathVariable Long historiaId) {
-        return ResponseEntity.ok(anotacionHistoriaService.listarAnotacionesPorHistoria(historiaId));
+    public ResponseEntity<PaginaRs<AnotacionResumenRs>> listarAnotacionesPaginado(AnotacionFiltro filtro) {
+        return ResponseEntity.ok(anotacionService.listarAnotacionesPaginado(filtro));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<AnotacionHistoria> consultarAnotacion(Long id) {
+        return ResponseEntity.ok(anotacionService.consultarAnotacion(id));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ResponseEntity<MiRespuestaRS> crearAnotacion(AnotacionHistoriaRq rq) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(anotacionService.crearAnotacion(rq));
     }
 }
