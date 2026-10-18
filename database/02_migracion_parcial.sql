@@ -13,6 +13,7 @@
 --      fecha de emisión, activo) y completa los registros existentes.
 --   5. Crea las llaves foráneas e índices de consulta.
 -- =====================================================================================
+   SET SQL_SAFE_UPDATES = 0;
 USE clinica;
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -125,5 +126,3 @@ ALTER TABLE formula_medica
   ADD CONSTRAINT fk_formula_medico      FOREIGN KEY (medico_id)      REFERENCES medico (id),
   ADD CONSTRAINT fk_formula_historia    FOREIGN KEY (historia_id)    REFERENCES historia_medica (id),
   ADD CONSTRAINT fk_formula_medicamento FOREIGN KEY (medicamento_id) REFERENCES medicamento (id);
-
-SET FOREIGN_KEY_CHECKS = 1;
