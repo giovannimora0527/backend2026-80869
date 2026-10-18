@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -68,5 +68,33 @@ public class CitaApiController implements CitaApi {
     @Override
     public ResponseEntity<MiRespuestaRS> reactivarCita(Long id) {
         return ResponseEntity.ok(citaService.reactivarCita(id));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<List<Cita>> filtrarCitasPorFecha(
+            LocalDateTime fechaInicio,
+            LocalDateTime fechaFin) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.filtrarCitasPorFecha(fechaInicio, fechaFin));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<Cita> crearCita(@RequestBody Cita cita) throws BadRequestException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.citaService.crearCita(cita));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseEntity<Cita> actualizarCita(
+            @PathVariable Long id,
+            @RequestBody Cita cita) throws BadRequestException {
+        return ResponseEntity.ok(this.citaService.actualizarCita(id, cita));
     }
 }
