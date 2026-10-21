@@ -2,6 +2,7 @@ package com.uniminuto.clinica;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+<<<<<<< HEAD
 import org.springframework.test.context.ActiveProfiles;
 
 /**
@@ -16,4 +17,14 @@ class ClinicaApplicationTests {
     @Test
     void contextLoads() {
     }
+=======
+
+@SpringBootTest
+class ClinicaApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+>>>>>>> 3f64126562f972b8de9fb36bb740dd51a6fcca19
 }

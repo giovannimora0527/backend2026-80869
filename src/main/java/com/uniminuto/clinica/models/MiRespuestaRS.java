@@ -1,5 +1,6 @@
 package com.uniminuto.clinica.models;
 
+<<<<<<< HEAD
 /**
  * Respuesta estándar de las operaciones de escritura (crear, editar, cancelar...).
  */
@@ -47,4 +48,20 @@ public class MiRespuestaRS {
     public static MiRespuestaRS of(int status, String message) {
         return of(status, message, null);
     }
+=======
+import lombok.Data;
+
+@Data
+public class MiRespuestaRS {
+
+    /**
+     * Status de la peticion.
+     */
+    private int status;
+
+    /**
+     * Mensaje de la peticion.
+     */
+    private String message;
+>>>>>>> 3f64126562f972b8de9fb36bb740dd51a6fcca19
 }
