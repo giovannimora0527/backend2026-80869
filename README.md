@@ -1,8 +1,4 @@
-# backend2026-80869
-Backend para una clinica veterinaria
+# Backend de la clínica veterinaria
 
-`GET /historia-clinica/listar` incluye `formulasMedicas` en cada elemento de
-`anotaciones`, conservando los campos existentes. Contiene las formulas de la cita
-asociada a esa anotacion, ordenadas por fecha de creacion descendente, con su
-medicamento, dosis, frecuencia, duracion e indicaciones. Si no hay formulas,
-`formulasMedicas` es una lista vacia (`[]`).
+API REST para la gestión de clientes, mascotas, citas, historias clínicas, médicos, usuarios y fórmulas médicas. Está implementada con Java 21, Spring Boot 4, Spring Web, Spring Data JPA y MySQL.
+
