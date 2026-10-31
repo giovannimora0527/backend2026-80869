@@ -2,6 +2,8 @@ package com.uniminuto.clinica.models;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class UsuarioRS {
 
@@ -10,4 +12,6 @@ public class UsuarioRS {
     private String email;
     private Integer rol;
     private String perfil;
+    private Boolean activo;
+    private LocalDateTime fechaCreacion;
 }

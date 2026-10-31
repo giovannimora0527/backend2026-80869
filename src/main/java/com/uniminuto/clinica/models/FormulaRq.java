@@ -4,24 +4,39 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Datos que envía el frontend para crear o editar una fórmula médica.
+ */
 @Data
 public class FormulaRq {
 
-      private Long id;
+    /** Identificador de la fórmula (solo al editar). */
+    private Long id;
 
-      private Long citaId;
+    /** Consulta (cita) a la que pertenece la fórmula. */
+    private Long citaId;
 
-      private Long medicamentoId;
+    /** Mascota a la que se formula; debe ser la de la cita. */
+    private Integer mascotaId;
 
-      private String dosis;
+    /** Veterinario que emite la fórmula. */
+    private Long medicoId;
 
-      private String indicaciones;
+    /** Medicamento recetado. */
+    private Long medicamentoId;
 
-      private LocalDateTime fechaCreacionRegistro;
+    /** Dosis: un número mayor a cero con su unidad (por ejemplo "0.5 ml"). */
+    private String dosis;
 
-      private LocalDateTime fechaModificacionRegistro;
+    /** Cada cuánto se administra (por ejemplo "Cada 12 horas"). */
+    private String frecuencia;
 
-      private String frecuencia;
+    /** Duración del tratamiento: un número mayor a cero con su unidad (por ejemplo "5 días"). */
+    private String duracion;
 
-      private String duracion;
+    /** Indicaciones adicionales para el cliente. */
+    private String indicaciones;
+
+    /** Fecha de emisión; si no llega se usa la fecha y hora actuales. */
+    private LocalDateTime fechaEmision;
 }

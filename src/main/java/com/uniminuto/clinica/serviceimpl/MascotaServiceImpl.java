@@ -4,6 +4,7 @@ import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Raza;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.exception.NotFoundException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.ClienteRepository;
@@ -58,6 +59,15 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
     @Override
+    public Mascota buscarMascotaPorId(Integer id) {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("El id de la mascota debe ser un número mayor a cero.");
+        }
+        return mascotaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("La mascota con ID " + id + " no existe."));
+    }
+
+    @Override
     public List<Mascota> buscarMascotasPorCliente(Long clienteId) throws BadRequestException {
 
         // Validar que cliente id != null
@@ -69,7 +79,7 @@ public class MascotaServiceImpl implements MascotaService {
                 .findById(clienteId);
 
         if (optCliente.isEmpty()) {
-            throw new BadRequestException("El cliente con ID " + clienteId + " no existe");
+            throw new NotFoundException("El cliente con ID " + clienteId + " no existe");
         }
 
         return this.mascotaRepository
@@ -130,6 +140,7 @@ public class MascotaServiceImpl implements MascotaService {
         nueva.setCliente(optCliente.get());
         nueva.setRaza(optRaza.get());
         nueva.setFechaRegistro(LocalDateTime.now());
+        nueva.setActivo(Boolean.TRUE);
 
         // Paso 5. Guardar la nueva mascota en la base de datos
         this.mascotaRepository.save(nueva);

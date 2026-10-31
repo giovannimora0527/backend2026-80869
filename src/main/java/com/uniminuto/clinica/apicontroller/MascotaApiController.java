@@ -46,6 +46,11 @@ public class MascotaApiController implements MascotaApi {
     }
 
     @Override
+    public ResponseEntity<Mascota> buscarMascotaPorId(Integer id) {
+        return ResponseEntity.ok(mascotaService.buscarMascotaPorId(id));
+    }
+
+    @Override
     public ResponseEntity<MiRespuestaRS> guardarMascota(MascotaRq mascotaRq) throws BadRequestException {
         return ResponseEntity.ok(mascotaService.guardarMascota(mascotaRq));
     }

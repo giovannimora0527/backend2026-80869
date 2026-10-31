@@ -16,6 +16,21 @@ public interface MascotaService {
 
     Optional<Mascota> findByNombreMascota(String nombreMascota);
 
+    /**
+     * Consulta una mascota por su id.
+     *
+     * @param id identificador de la mascota.
+     * @return la mascota con su cliente y raza.
+     */
+    Mascota buscarMascotaPorId(Integer id);
+
+    /**
+     * Lista las mascotas de un cliente (para el combo dependiente Cliente → Mascota).
+     *
+     * @param clienteId identificador del cliente.
+     * @return mascotas del cliente ordenadas por nombre.
+     * @throws BadRequestException si el id es nulo; 404 si el cliente no existe.
+     */
     List<Mascota> buscarMascotasPorCliente(Long clienteId) throws BadRequestException;
 
     List<Mascota> buscarMascotasPorRaza(Integer razaId) throws BadRequestException;

@@ -7,6 +7,7 @@ import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -90,10 +91,20 @@ public interface MascotaApi {
 
 
     /**
-     * Metodo test del servicio.
+     * Consulta una mascota por su id.
      *
-     * @return Servicio funcionando correctamente.
-     * @throws BadRequestException excepcion.
+     * @param id identificador de la mascota.
+     * @return la mascota.
+     */
+    @GetMapping(value = "/{id}", produces = {"application/json"})
+    ResponseEntity<Mascota> buscarMascotaPorId(@PathVariable("id") Integer id);
+
+    /**
+     * Registra una mascota nueva (queda activa).
+     *
+     * @param mascotaRq datos de la mascota.
+     * @return confirmación.
+     * @throws BadRequestException si los datos no son válidos.
      */
     @PostMapping(value = "/guardar",
             produces = {"application/json"},
