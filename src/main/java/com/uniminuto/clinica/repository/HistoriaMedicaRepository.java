@@ -1,20 +1,19 @@
 package com.uniminuto.clinica.repository;
 
+import com.uniminuto.clinica.entity.AnotacionHistoria;
 import com.uniminuto.clinica.entity.HistoriaMedica;
+import com.uniminuto.clinica.entity.Mascota;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Optional;
 
-/**
- * Repositorio JPA para la entidad
- * Provee las operaciones CRUD básicas heredadas de (JpaRepository)
- */
+@Repository
 public interface HistoriaMedicaRepository extends JpaRepository<HistoriaMedica, Long> {
 
-    /**
-     * Busca las historias médicas cuya (fechaCreacion) esté dentro del
-     * rango dado, ordenadas de la más reciente a la más antigua.
-     */
-    List<HistoriaMedica> findByFechaCreacionBetweenOrderByFechaCreacionDesc(LocalDateTime fechaInicial, LocalDateTime fechaFinal);
+    Optional<HistoriaMedica> findByMascota(Mascota mascota);
+
+    boolean existsByMascota(Mascota mascota);
+
+    boolean existsByMascotaAndIdNot(Mascota mascota, Long id);
 }

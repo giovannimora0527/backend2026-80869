@@ -1,19 +1,24 @@
 package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.Mascota;
+import com.uniminuto.clinica.entity.Medico;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Se conecta con la base de datos mediante Spring data JPA (sin necesidad de escribir consultas sql)
- */
+@Repository
 public interface CitaRepository extends JpaRepository<Cita, Long> {
 
-    /**
-     * Busca las citas cuya esté dentro del rango dado,
-     * ordenadas de la más reciente a la más antigua.
-     */
-    List<Cita> findByFechaHoraBetweenOrderByFechaHoraDesc(LocalDateTime fechaInicio, LocalDateTime fechaFin);
+    List<Cita> findByFechaHoraBetween(LocalDateTime fechaInicio, LocalDateTime fechaFin);
+
+    Optional<Cita> findByMascotaAndMedico(Mascota mascota, Medico medico);
+
+    List<Cita> findByMedicoAndFechaHoraBetween(Medico medico, LocalDateTime fechaInicio, LocalDateTime fechaFin);
+
+    List<Cita> findByMascotaOrderByFechaHoraDesc(Mascota mascota);
+
 }

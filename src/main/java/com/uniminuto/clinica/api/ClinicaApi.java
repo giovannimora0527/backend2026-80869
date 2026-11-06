@@ -11,7 +11,12 @@ import com.uniminuto.clinica.exception.BadRequestException;
 @RequestMapping("/clinica")
 public interface ClinicaApi {
 
-
+    /**
+     * Metodo test del servicio.
+     *
+     * @return Servicio funcionando correctamente.
+     * @throws BadRequestException excepcion.
+     */
     @GetMapping(value = "/test",
             produces = {"application/text"},
             consumes = {"application/json"})

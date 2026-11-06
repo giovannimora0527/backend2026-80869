@@ -5,30 +5,20 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * Entidad que representa la historia médica de un paciente (mascota).
- * Mapea la tabla (historia_medica). Se relaciona lógicamente con
- * (AnotacionHistoria) (una historia puede tener varias anotaciones),
- * pero esa relación se maneja mediante el campo (code historiaId) dentro de
- * (AnotacionHistoria), en lugar de una colección @OneToMany, para
- * mantener el modelo simple
- */
-@Data
 @Entity
 @Table(name = "historia_medica")
+@Data
 public class HistoriaMedica {
 
-    /** Identificador único de la historia médica (PK, autoincremental). */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    /** Identificador del paciente (mascota) dueño de esta historia médica. */
-    @Column(name = "paciente_id", nullable = false)
-    private Integer pacienteId;
+    @ManyToOne
+    @JoinColumn(name = "paciente_id", nullable = false)
+    private Mascota mascota;
 
-
-    @Column(name = "fecha_creacion")
+    @Column(name = "fecha_creacion", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime fechaCreacion;
 }

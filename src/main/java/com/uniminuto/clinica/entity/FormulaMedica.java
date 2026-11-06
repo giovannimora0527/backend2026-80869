@@ -5,41 +5,39 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * Mapea la tabla formula_medica
- */
-@Data
 @Entity
 @Table(name = "formula_medica")
+@Data
 public class FormulaMedica {
 
-    /** Identificador único de la fórmula médica (PK, autoincrementable). */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    /** Identificador de la cita asociada a esta fórmula. */
-    @Column(name = "cita_id", nullable = false)
-    private Integer citaId;
+    @ManyToOne
+    @JoinColumn(name = "cita_id", nullable = false)
+    private Cita cita;
 
-    /** Identificador del medicamento formulado. */
-    @Column(name = "medicamento_id", nullable = false)
-    private Integer medicamentoId;
-
+    @ManyToOne
+    @JoinColumn(name = "medicamento_id", nullable = false)
+    private Medicamento medicamento;
 
     @Column(name = "dosis", nullable = false, columnDefinition = "TEXT")
     private String dosis;
 
-
     @Column(name = "indicaciones", columnDefinition = "TEXT")
     private String indicaciones;
-
 
     @Column(name = "fecha_creacion_registro", nullable = false)
     private LocalDateTime fechaCreacionRegistro;
 
-    /** (si aplica). */
     @Column(name = "fecha_actualizacion_registro")
     private LocalDateTime fechaActualizacionRegistro;
+
+    @Column(name = "frecuencia")
+    private String frecuencia;
+
+    @Column(name = "duracion")
+    private String duracion;
 }

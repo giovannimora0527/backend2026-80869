@@ -1,21 +1,12 @@
 package com.uniminuto.clinica.models;
 
+import com.uniminuto.clinica.entity.HistoriaMedica;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * (response) que representa una historia médica.
- */
 @Data
-public class HistoriaMedicaRS {
-
-
-    private Long id;
-
-
-    private Integer pacienteId;
-
-
-    private LocalDateTime fechaCreacion;
+public class HistoriaMedicaRs {
+    private HistoriaMedica historia;
+    private List<AnotacionHistoriaRs> anotaciones;
 }

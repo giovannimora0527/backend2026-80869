@@ -1,115 +1,105 @@
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.AnotacionHistoria;
-import com.uniminuto.clinica.models.AnotacionHistoriaRQ;
-import com.uniminuto.clinica.models.AnotacionHistoriaRS;
-import com.uniminuto.clinica.repository.AnotacionHistoriaRepository;
-import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
-import com.uniminuto.clinica.service.AnotacionHistoriaService;
+import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.HistoriaMedica;
+import com.uniminuto.clinica.entity.Mascota;
+import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.AnotacionHistoriaRq;
+import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.repository.AnotacionHistoriaRepository;
+import com.uniminuto.clinica.repository.CitaRepository;
+import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
+import com.uniminuto.clinica.repository.MascotaRepository;
+import com.uniminuto.clinica.repository.MedicoRepository;
+import com.uniminuto.clinica.service.AnotacionHistoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
 
-    /** Repositorio para acceder a los datos de (AnotacionHistoria) */
-    @Autowired
-    private AnotacionHistoriaRepository anotacionHistoriaRepository;
-
-    /** Repositorio usado para validar que la historia médica referenciada exista. */
     @Autowired
     private HistoriaMedicaRepository historiaMedicaRepository;
 
-    @Override
-    public AnotacionHistoriaRS crear(AnotacionHistoriaRQ request) throws BadRequestException {
-        if (request.getHistoriaId() == null || request.getMedicoId() == null) {
-            throw new BadRequestException("historiaId y medicoId son obligatorios");
-        }
-        if (request.getDescripcion() == null || request.getDescripcion().isBlank()) {
-            throw new BadRequestException("descripcion es obligatoria");
-        }
-        if (!historiaMedicaRepository.existsById(Long.valueOf(request.getHistoriaId()))) {
-            throw new BadRequestException("No existe la historia médica con id " + request.getHistoriaId());
-        }
+    @Autowired
+    private AnotacionHistoriaRepository anotacionHistoriaRepository;
 
-        AnotacionHistoria anotacion = new AnotacionHistoria();
-        anotacion.setHistoriaId(request.getHistoriaId());
-        anotacion.setMedicoId(request.getMedicoId());
-        anotacion.setDescripcion(request.getDescripcion());
-        anotacion.setFecha(LocalDateTime.now());
+    @Autowired
+    private MascotaRepository mascotaRepository;
 
-        anotacion = anotacionHistoriaRepository.save(anotacion);
-        return convertirARS(anotacion);
-    }
+    @Autowired
+    private MedicoRepository medicoRepository;
+
+    @Autowired
+    private CitaRepository citaRepository;
 
     @Override
-    public List<AnotacionHistoriaRS> listarPorRangoFechas(LocalDateTime fechaInicio, LocalDateTime fechaFin) throws BadRequestException {
-        if (fechaInicio == null || fechaFin == null) {
-            throw new BadRequestException("Debe indicar fechaInicio y fechaFin");
+    public MiRespuestaRS crearAnotacionHistoria(AnotacionHistoriaRq anotacionHistoriaRq) {
+        this.validarAnotacionHistoria(anotacionHistoriaRq);
+        Optional<Cita> optCita = this.citaRepository.findById(anotacionHistoriaRq.getCitaId());
+        if (optCita.isEmpty()) {
+            throw new BadRequestException("La cita con ID " + anotacionHistoriaRq.getCitaId()  +
+                    " no existe. Por favor consulte al administrador del sistema o registre la cita antes de " +
+                    "crear la anotación de historia clínica.");
         }
-        if (fechaInicio.isAfter(fechaFin)) {
-            throw new BadRequestException("fechaInicio no puede ser posterior a fechaFin");
+
+        HistoriaMedica historia = new HistoriaMedica();
+        AnotacionHistoria nuevaAnotacion = new AnotacionHistoria();
+
+        Cita cita = optCita.get();
+
+        Optional<HistoriaMedica> historiaOpt = this.historiaMedicaRepository
+                .findByMascota(cita.getMascota());
+        boolean existeHistoria = historiaOpt.isPresent();
+        if (historiaOpt.isEmpty()) {
+           HistoriaMedica nueva = new HistoriaMedica();
+           nueva.setMascota(cita.getMascota());
+           nueva.setFechaCreacion(LocalDateTime.now());
+           historia = this.historiaMedicaRepository.save(nueva);
         }
-        return anotacionHistoriaRepository.findByFechaBetweenOrderByFechaDesc(fechaInicio, fechaFin)
-                .stream()
-                .map(this::convertirARS)
-                .collect(Collectors.toList());
+
+        Optional<Medico> medicoOptional = this.medicoRepository.findById(anotacionHistoriaRq.getMedicoId());
+        if (medicoOptional.isEmpty()) {
+            throw new BadRequestException("El médico con ID " + anotacionHistoriaRq.getMedicoId() + " no existe");
+        }
+        nuevaAnotacion.setDescripcion(anotacionHistoriaRq.getDescripcion());
+        nuevaAnotacion.setHistoria(existeHistoria? historiaOpt.get() : historia);
+        nuevaAnotacion.setDiagnostico(anotacionHistoriaRq.getDiagnostico());
+        nuevaAnotacion.setObservaciones(anotacionHistoriaRq.getObservaciones());
+        nuevaAnotacion.setMedico(medicoOptional.get());
+        nuevaAnotacion.setFecha(LocalDateTime.now());
+        nuevaAnotacion.setCita(cita);
+        this.anotacionHistoriaRepository.save(nuevaAnotacion);
+
+        MiRespuestaRS rta = new MiRespuestaRS();
+        rta.setStatus(200);
+        rta.setMessage("Anotación de historia clínica creada exitosamente");
+        return rta;
     }
 
-    /**
-     * Valida primero que la historia médica exista, para dar un mensaje
-     * claro en vez de simplemente devolver una lista vacía.
-     */
-    @Override
-    public List<AnotacionHistoriaRS> listarPorHistoria(Integer historiaId) throws BadRequestException {
-        if (historiaId == null) {
-            throw new BadRequestException("historiaId es obligatorio");
+    private void validarAnotacionHistoria(AnotacionHistoriaRq anotacionHistoriaRq) throws BadRequestException {
+        if (anotacionHistoriaRq == null) {
+            throw new BadRequestException("La anotación de historia clínica es obligatoria");
         }
-        if (!historiaMedicaRepository.existsById(Long.valueOf(historiaId))) {
-            throw new BadRequestException("No existe la historia médica con id " + historiaId);
+        if (anotacionHistoriaRq.getCitaId() == null) {
+            throw new BadRequestException("El ID de la cita es obligatorio");
         }
-        return anotacionHistoriaRepository.findByHistoriaIdOrderByFechaDesc(historiaId)
-                .stream()
-                .map(this::convertirARS)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public AnotacionHistoriaRS actualizar(AnotacionHistoriaRQ request) throws BadRequestException {
-        if (request.getId() == null) {
-            throw new BadRequestException("id es obligatorio para actualizar la anotación");
+        if (anotacionHistoriaRq.getMedicoId() == null) {
+            throw new BadRequestException("El ID del médico es obligatorio");
         }
-        AnotacionHistoria anotacion = anotacionHistoriaRepository.findById(request.getId())
-                .orElseThrow(() -> new BadRequestException("No existe la anotación con id " + request.getId()));
-
-        if (request.getDescripcion() == null || request.getDescripcion().isBlank()) {
-            throw new BadRequestException("descripcion es obligatoria");
+        if (anotacionHistoriaRq.getDescripcion() == null || anotacionHistoriaRq.getDescripcion().isEmpty()) {
+            throw new BadRequestException("La descripción de la anotación es obligatoria");
         }
-
-        anotacion.setDescripcion(request.getDescripcion());
-        if (request.getMedicoId() != null) {
-            anotacion.setMedicoId(request.getMedicoId());
+        if (anotacionHistoriaRq.getDiagnostico() == null || anotacionHistoriaRq.getDiagnostico().isEmpty()) {
+            throw new BadRequestException("El diagnóstico de la anotación es obligatorio");
         }
-
-        anotacion = anotacionHistoriaRepository.save(anotacion);
-        return convertirARS(anotacion);
-    }
-
-    /**
-     * Convierte una entidad (AnotacionHistoria) en su DTO de salida.
-     */
-    private AnotacionHistoriaRS convertirARS(AnotacionHistoria anotacion) {
-        AnotacionHistoriaRS rs = new AnotacionHistoriaRS();
-        rs.setId(anotacion.getId());
-        rs.setHistoriaId(anotacion.getHistoriaId());
-        rs.setMedicoId(anotacion.getMedicoId());
-        rs.setFecha(anotacion.getFecha());
-        rs.setDescripcion(anotacion.getDescripcion());
-        return rs;
+        if (anotacionHistoriaRq.getObservaciones() == null || anotacionHistoriaRq.getObservaciones().isEmpty()) {
+            throw new BadRequestException("Las observaciones de la anotación son obligatorias");
+        }
     }
 }

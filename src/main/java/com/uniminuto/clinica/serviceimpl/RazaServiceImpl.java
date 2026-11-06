@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -38,6 +39,12 @@ public class RazaServiceImpl implements RazaService {
         respuesta.setStatus(200);
         respuesta.setMessage("Raza creada correctamente");
         return respuesta;
+    }
+
+    @Override
+    public List<Raza> listarRazas() throws BadRequestException {
+        return razaRepository.findAll().stream().sorted((r1, r2) -> r1.getNombre().compareToIgnoreCase(r2
+                .getNombre())).toList();
     }
 
     private void validarRazaRq(RazaRq razaRq) throws BadRequestException {

@@ -1,23 +1,14 @@
 package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.AnotacionHistoria;
+import com.uniminuto.clinica.entity.HistoriaMedica;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Repositorio JPA para la entidad (AnotacionHistoria) solo para la persistencia (no se usan metodos JPA)
- */
+@Repository
 public interface AnotacionHistoriaRepository extends JpaRepository<AnotacionHistoria, Long> {
-
-    /**
-     * se le dan dos parametros para buscar las anotaciones de historias médicas dentro de un rango de fechas, ordenadas de la más reciente a la más antigua.
-     */
-    List<AnotacionHistoria> findByFechaBetweenOrderByFechaDesc(LocalDateTime fechaInicio, LocalDateTime fechaFin);
-
-    /**
-     * lo mismo pero por id no por rango de fecha
-     */
-    List<AnotacionHistoria> findByHistoriaIdOrderByFechaDesc(Integer historiaId);
+    List<AnotacionHistoria> findByHistoria(HistoriaMedica historia);
 }
