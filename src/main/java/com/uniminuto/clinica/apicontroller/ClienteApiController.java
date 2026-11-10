@@ -3,6 +3,8 @@ package com.uniminuto.clinica.apicontroller;
 import com.uniminuto.clinica.api.ClienteApi;
 import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.ClienteRq;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,5 +26,15 @@ public class ClienteApiController implements ClienteApi {
     @Override
     public ResponseEntity<Cliente> buscarClientesPorDocumento(String documento) throws BadRequestException {
         return ResponseEntity.ok(clienteService.buscarClientesPorDocumento(documento));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> guardar(ClienteRq clienteRq) throws BadRequestException {
+        return ResponseEntity.ok(clienteService.crearCliente(clienteRq));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> actualizar(ClienteRq clienteRq) throws BadRequestException {
+        return ResponseEntity.ok(clienteService.actualizarCliente(clienteRq));
     }
 }

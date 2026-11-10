@@ -15,4 +15,7 @@ public interface PerfilMenuRepository extends JpaRepository<PerfilMenu, Integer>
      * @return Lista de perfil menu asociados.
      */
     List<PerfilMenu> findByPerfil(Perfil perfil);
+
+    /** Elimina todas las asignaciones de menus de un perfil (para reasignar). */
+    void deleteByPerfil(Perfil perfil);
 }

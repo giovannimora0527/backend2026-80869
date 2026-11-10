@@ -1,8 +1,8 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PerfilRs;
 import com.uniminuto.clinica.models.UsuarioRq;
 import com.uniminuto.clinica.models.UsuarioRs;
 import org.springframework.http.ResponseEntity;
@@ -55,5 +55,17 @@ public interface UsuarioApi {
     ResponseEntity<MiRespuestaRS> actualizar(
             @RequestBody UsuarioRq usuarioRq
     )
+            throws BadRequestException;
+
+    /**
+     * Metodo que lista los perfiles (roles) disponibles del sistema.
+     * Se utiliza para poblar la seleccion de rol en la gestion de usuarios.
+     *
+     * @return Lista de perfiles.
+     * @throws BadRequestException excepcion.
+     */
+    @GetMapping(value = "/listar-perfiles",
+            produces = {"application/json"})
+    ResponseEntity<List<PerfilRs>> listarPerfiles()
             throws BadRequestException;
 }

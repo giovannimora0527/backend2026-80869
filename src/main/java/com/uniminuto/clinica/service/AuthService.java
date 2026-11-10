@@ -6,8 +6,9 @@ import com.uniminuto.clinica.models.AuthRs;
 import com.uniminuto.clinica.models.CloseSession;
 import com.uniminuto.clinica.models.CloseSessionRs;
 import com.uniminuto.clinica.models.LoginRs;
+import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.RecuperarPasswordRq;
 import com.uniminuto.clinica.models.TokenRq;
-import org.springframework.web.bind.annotation.RequestBody;
 
 public interface AuthService {
 
@@ -16,5 +17,8 @@ public interface AuthService {
     LoginRs validateToken(TokenRq tokenRq) throws BadRequestException;
 
     CloseSessionRs cerrarSesion(CloseSession closeSession)
+            throws BadRequestException;
+
+    MiRespuestaRS recuperarPassword(RecuperarPasswordRq recuperarPasswordRq)
             throws BadRequestException;
 }

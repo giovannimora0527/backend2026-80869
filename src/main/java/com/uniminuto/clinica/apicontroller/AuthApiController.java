@@ -7,6 +7,8 @@ import com.uniminuto.clinica.models.AuthRs;
 import com.uniminuto.clinica.models.CloseSession;
 import com.uniminuto.clinica.models.CloseSessionRs;
 import com.uniminuto.clinica.models.LoginRs;
+import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.RecuperarPasswordRq;
 import com.uniminuto.clinica.models.TokenRq;
 import com.uniminuto.clinica.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +35,11 @@ public class AuthApiController implements AuthApi {
     @Override
     public ResponseEntity<CloseSessionRs> cerrarSesion(CloseSession closeSession) throws BadRequestException {
         return ResponseEntity.ok(this.authService.cerrarSesion(closeSession));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> recuperarPassword(RecuperarPasswordRq recuperarPasswordRq)
+            throws BadRequestException {
+        return ResponseEntity.ok(this.authService.recuperarPassword(recuperarPasswordRq));
     }
 }

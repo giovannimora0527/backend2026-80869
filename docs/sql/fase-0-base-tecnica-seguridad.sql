@@ -1,0 +1,31 @@
+-- ============================================================
+-- Fase 0 - Base tecnica y seguridad
+-- Fecha: 2026-11
+-- ============================================================
+--
+-- Objetivo de la fase:
+--   - Incorporar la documentacion de la API (Swagger / OpenAPI).
+--   - Implementar el control de acceso por rol en el backend (filtro JWT).
+--   - Completar el cierre de sesion.
+--   - Agregar la gestion del perfil propio (editar perfil, recuperar y
+--     cambiar contrasena).
+--
+-- Cambios en el modelo de datos:
+--   NINGUNO.
+--
+-- Justificacion:
+--   La gestion del perfil se implemento bajo la Opcion A: el usuario solo
+--   edita su nombre de usuario y su correo electronico. Los datos personales
+--   de contacto (nombres, telefono, direccion) ya existen en las tablas
+--   `cliente` y `medico`, por lo que agregarlos a la tabla `usuario`
+--   duplicaria informacion y afectaria la integridad del modelo. Por esta
+--   razon no se modifica ninguna tabla en esta fase.
+--
+--   Las funcionalidades de recuperacion y cambio de contrasena operan sobre
+--   las columnas ya existentes de la tabla `usuario` (`password_hash`,
+--   `email`), sin requerir cambios de estructura.
+--
+-- Nota:
+--   Esta fase no requiere ejecutar sentencias SQL. El archivo se conserva
+--   como registro del analisis de modelo de datos correspondiente a la fase.
+-- ============================================================

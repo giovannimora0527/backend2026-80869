@@ -9,6 +9,8 @@ import com.uniminuto.clinica.models.AuthRs;
 import com.uniminuto.clinica.models.CloseSession;
 import com.uniminuto.clinica.models.CloseSessionRs;
 import com.uniminuto.clinica.models.LoginRs;
+import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.RecuperarPasswordRq;
 import com.uniminuto.clinica.models.TokenRq;
 import com.uniminuto.clinica.repository.OtpTokenRepository;
 import com.uniminuto.clinica.repository.SessionRepository;
@@ -113,7 +115,63 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public CloseSessionRs cerrarSesion(CloseSession closeSession) throws BadRequestException {
-        return null;
+        if (closeSession == null || closeSession.getUsuarioId() == null) {
+            throw new BadRequestException("El identificador del usuario es obligatorio para cerrar sesion.");
+        }
+        java.util.List<Session> sesiones = this.sessionRepository
+                .findByUserId(closeSession.getUsuarioId());
+        if (!sesiones.isEmpty()) {
+            this.sessionRepository.deleteAll(sesiones);
+        }
+        CloseSessionRs rta = new CloseSessionRs();
+        rta.setSuccess(true);
+        rta.setMessage("Sesion cerrada correctamente.");
+        return rta;
+    }
+
+    @Override
+    public MiRespuestaRS recuperarPassword(RecuperarPasswordRq recuperarPasswordRq)
+            throws BadRequestException {
+        if (recuperarPasswordRq == null
+                || recuperarPasswordRq.getEmail() == null
+                || recuperarPasswordRq.getEmail().isBlank()) {
+            throw new BadRequestException("El correo electronico es obligatorio.");
+        }
+        Optional<Usuario> optUser = this.usuarioRepository
+                .findByEmail(recuperarPasswordRq.getEmail().trim());
+        if (optUser.isEmpty()) {
+            throw new BadRequestException(
+                    "No existe un usuario registrado con el correo electronico proporcionado.");
+        }
+        Usuario user = optUser.get();
+        if (!user.getActivo()) {
+            throw new BadRequestException(
+                    "Se presento un problema. Contacte al administrador del sistema.");
+        }
+
+        // Se genera una contrasena temporal y se almacena cifrada en MD5.
+        String passwordTemporal = Utilidades.generarPasswordTemporal();
+        user.setPasswordHash(PasswordUtil.generarMD5(passwordTemporal));
+        this.usuarioRepository.save(user);
+
+        String bodyHtml = this.generarHtmlBodyRecuperacion(user.getUsername(), passwordTemporal);
+        this.emailService.enviarCorreo(user.getEmail(),
+                "Recuperacion de contrasena", bodyHtml, FROM);
+
+        MiRespuestaRS rta = new MiRespuestaRS();
+        rta.setStatus(200);
+        rta.setMessage("Se ha enviado una contrasena temporal al correo electronico registrado.");
+        return rta;
+    }
+
+    private String generarHtmlBodyRecuperacion(String username, String passwordTemporal) {
+        return "Estimado usuario " + username + ",<br><br>"
+                + "Se ha generado una contrasena temporal para el acceso a su cuenta: <b>"
+                + passwordTemporal + "</b><br><br>"
+                + "Por seguridad, le recomendamos iniciar sesion y cambiar esta contrasena "
+                + "lo antes posible desde la opcion Cambiar contrasena.<br><br>"
+                + "Saludos,<br>"
+                + "Clinica Veterinaria Uniminuto";
     }
 
     private String generarHtmlBodyCorreo(String username, String otpToken) {

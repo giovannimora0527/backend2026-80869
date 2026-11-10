@@ -20,4 +20,10 @@ public class MedicoRq {
     private String registroProfesional;
 
     private Long especializacionId;
+
+    /** Usuario del sistema asociado al medico (para el calendario por rol). Opcional. */
+    private Long usuarioId;
+
+    /** Estado activo/inactivo del medico. */
+    private Boolean estado;
 }

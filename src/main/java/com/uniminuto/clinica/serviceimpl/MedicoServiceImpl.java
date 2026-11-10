@@ -106,6 +106,12 @@ public class MedicoServiceImpl implements MedicoService {
         medico.setTelefono(medicoRq.getTelefono() == null ? null : medicoRq.getTelefono().trim());
         medico.setRegistroProfesional(medicoRq.getRegistroProfesional().trim());
         medico.setEspecializacion(especializacion);
+        // Vinculo con el usuario del sistema (opcional). Permite que el medico
+        // vea sus citas en el calendario al iniciar sesion.
+        medico.setUsuarioId(medicoRq.getUsuarioId());
+        if (medicoRq.getEstado() != null) {
+            medico.setEstado(medicoRq.getEstado());
+        }
     }
 
     private Especializacion existeEspecializacion(MedicoRq medicoRq) throws BadRequestException {

@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "f3b3f4c56ea8328ff10ebb4cbe88ca3241c83c91",
+    "indexed_at": "2026-11-09T08:00:30Z",
+    "project": "C-backend2026-80869",
+    "nodes": 1639,
+    "edges": 6380,
+    "original_size": 8257536,
+    "compressed_size": 1339529,
+    "compression_level": 3
+}

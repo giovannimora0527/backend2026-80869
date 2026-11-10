@@ -26,6 +26,9 @@ public interface MedicoRepository extends JpaRepository<Medico, Long> {
                                         @Param("fechaFin") LocalDateTime fechaFin,
                                         @Param("estado") String estado);
 
+    /** Busca el medico asociado a un usuario del sistema. */
+    java.util.Optional<Medico> findByUsuarioId(Long usuarioId);
+
     boolean existsByNumeroDocumento(String numeroDocumento);
 
     boolean existsByRegistroProfesional(String registroProfesional);

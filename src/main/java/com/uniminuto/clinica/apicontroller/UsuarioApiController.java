@@ -3,6 +3,7 @@ package com.uniminuto.clinica.apicontroller;
 import com.uniminuto.clinica.api.UsuarioApi;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PerfilRs;
 import com.uniminuto.clinica.models.UsuarioRq;
 import com.uniminuto.clinica.models.UsuarioRs;
 import com.uniminuto.clinica.service.UsuarioService;
@@ -32,5 +33,10 @@ public class UsuarioApiController implements UsuarioApi {
     @Override
     public ResponseEntity<MiRespuestaRS> actualizar(UsuarioRq usuarioRq) throws BadRequestException {
         return ResponseEntity.ok(this.usuarioService.actualizarUsuario(usuarioRq));
+    }
+
+    @Override
+    public ResponseEntity<List<PerfilRs>> listarPerfiles() throws BadRequestException {
+        return ResponseEntity.ok(this.usuarioService.listarPerfiles());
     }
 }

@@ -18,6 +18,15 @@ public class Medico {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id") private Long id;
+
+    /**
+     * Identificador del usuario del sistema asociado a este medico.
+     * Permite que, al iniciar sesion un medico, el calendario muestre las
+     * citas asignadas a su registro. Es opcional: no todo medico tiene usuario.
+     */
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
     @Column(name = "tipo_documento", nullable = false, length = 10)
     private String tipoDocumento;
 

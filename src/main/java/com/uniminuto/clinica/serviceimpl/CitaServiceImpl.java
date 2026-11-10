@@ -133,6 +133,11 @@ public class CitaServiceImpl implements CitaService {
             throw new BadRequestException("El médico no existe");
         }
 
+        // Regla de negocio: no se pueden asignar citas a medicos inactivos.
+        if (!Boolean.TRUE.equals(medicoOptional.get().getEstado())) {
+            throw new BadRequestException("No se pueden asignar citas a un medico inactivo.");
+        }
+
         Optional<Cita> citaOptional = citaRepository.findByMascotaAndMedico(mascotaOptional.get(), medicoOptional.get());
 
         if (citaOptional.isPresent()) {

@@ -4,6 +4,7 @@ import com.uniminuto.clinica.entity.Perfil;
 import com.uniminuto.clinica.entity.Usuario;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.PerfilRs;
 import com.uniminuto.clinica.models.UsuarioRq;
 import com.uniminuto.clinica.models.UsuarioRs;
 import com.uniminuto.clinica.repository.PerfilRepository;
@@ -69,7 +70,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuarioNuevo.setPasswordHash(claveMD5);
         usuarioNuevo.setPerfil(optPerfil.get());
         usuarioNuevo.setEmail(usuarioRq.getEmail());
-        usuarioNuevo.setActivo(true);
+        usuarioNuevo.setActivo(usuarioRq.getActivo() != null ? usuarioRq.getActivo() : true);
         usuarioNuevo.setFechaCreacion(LocalDateTime.now());
 
         usuarioRepository.save(usuarioNuevo);
@@ -83,7 +84,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public MiRespuestaRS actualizarUsuario(UsuarioRq usuarioRq) {
-        this.validarUsuario(usuarioRq);
+        this.validarUsuarioActualizacion(usuarioRq);
 
         Optional<Usuario> optUser = this.usuarioRepository.findById(usuarioRq.getId());
         if (optUser.isEmpty()) {
@@ -111,6 +112,12 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuarioExistente.setEmail(usuarioRq.getEmail());
         usuarioExistente.setActivo(usuarioRq.getActivo());
         usuarioExistente.setPerfil(optPerfil.get());
+
+        // La contrasena es opcional al actualizar: solo se cambia si se envia.
+        if (usuarioRq.getPassword() != null && !usuarioRq.getPassword().isEmpty()) {
+            usuarioExistente.setPasswordHash(PasswordUtil.generarMD5(usuarioRq.getPassword()));
+        }
+
         usuarioRepository.save(usuarioExistente);
 
         MiRespuestaRS rta = new MiRespuestaRS();
@@ -118,6 +125,39 @@ public class UsuarioServiceImpl implements UsuarioService {
         rta.setStatus(200);
 
         return rta;
+    }
+
+    /**
+     * Validacion para la actualizacion de usuario. A diferencia de la creacion,
+     * la contrasena es opcional: si no se envia, se conserva la actual.
+     */
+    private void validarUsuarioActualizacion(UsuarioRq usuarioRq) throws BadRequestException {
+        if (usuarioRq == null) {
+            throw new BadRequestException("El usuario no puede estar vacío");
+        }
+        if (usuarioRq.getId() == null) {
+            throw new BadRequestException("El identificador del usuario es obligatorio");
+        }
+        if (usuarioRq.getUsername() == null || usuarioRq.getUsername().isEmpty()) {
+            throw new BadRequestException("El nombre de usuario no puede estar vacío");
+        }
+        if (usuarioRq.getEmail() == null || usuarioRq.getEmail().isEmpty()) {
+            throw new BadRequestException("El correo electrónico no puede estar vacío");
+        }
+        if (usuarioRq.getPerfilId() == null) {
+            throw new BadRequestException("El perfil del usuario es obligatorio");
+        }
+    }
+
+    @Override
+    public List<PerfilRs> listarPerfiles() {
+        return this.perfilRepository.findAll().stream().map(perfil -> {
+            PerfilRs perfilRs = new PerfilRs();
+            perfilRs.setPerfilId(perfil.getPerfilId());
+            perfilRs.setNombre(perfil.getNombre());
+            perfilRs.setActivo(perfil.getActivo());
+            return perfilRs;
+        }).toList();
     }
 
     private void validarUsuario(UsuarioRq usuarioRq) throws BadRequestException {
@@ -130,7 +170,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (usuarioRq.getPassword() == null || usuarioRq.getPassword().isEmpty()) {
             throw new BadRequestException("La contraseña no puede estar vacía");
         }
-        if (usuarioRq.getRol() == null || usuarioRq.getRol().isEmpty()) {
+        // El rol del usuario se determina a partir del perfil seleccionado
+        // (perfilId), no del campo de texto rol.
+        if (usuarioRq.getPerfilId() == null) {
             throw new BadRequestException("El rol no puede estar vacío");
         }
         if (usuarioRq.getEmail() == null || usuarioRq.getEmail().isEmpty()) {

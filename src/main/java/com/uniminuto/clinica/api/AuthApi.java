@@ -6,6 +6,8 @@ import com.uniminuto.clinica.models.AuthRs;
 import com.uniminuto.clinica.models.CloseSession;
 import com.uniminuto.clinica.models.CloseSessionRs;
 import com.uniminuto.clinica.models.LoginRs;
+import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.RecuperarPasswordRq;
 import com.uniminuto.clinica.models.TokenRq;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -37,5 +39,12 @@ public interface AuthApi {
             consumes = {"application/json"})
     ResponseEntity<CloseSessionRs> cerrarSesion(
             @RequestBody CloseSession closeSession)
+            throws BadRequestException;
+
+    @PostMapping(value = "/recover-password",
+            produces = {"application/json"},
+            consumes = {"application/json"})
+    ResponseEntity<MiRespuestaRS> recuperarPassword(
+            @RequestBody RecuperarPasswordRq recuperarPasswordRq)
             throws BadRequestException;
 }
