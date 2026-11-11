@@ -67,7 +67,9 @@ public class JwtAutenticacionFilter extends OncePerRequestFilter {
      */
     private static final Map<String, List<String>> REGLAS_ACCESO_POR_ROL = Map.of(
             "/usuario", List.of("Administrador"),
-            "/rol", List.of("Administrador")
+            "/rol", List.of("Administrador"),
+            "/despacho", List.of("DESPACHO_MEDICO", "Administrador"),
+            "/reporte", List.of("Administrador", "Contable", "JEFE_BODEGA")
     );
 
     @Value("${JWT_SECRET}")

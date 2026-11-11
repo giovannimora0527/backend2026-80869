@@ -19,11 +19,24 @@ public class FormulaMedica {
     @JoinColumn(name = "cita_id", nullable = false)
     private Cita cita;
 
+    /**
+     * Medicamento unico (modelo antiguo). Ahora es opcional: las formulas nuevas
+     * usan el detalle formula_medicamento para soportar varios medicamentos.
+     */
     @ManyToOne
-    @JoinColumn(name = "medicamento_id", nullable = false)
+    @JoinColumn(name = "medicamento_id")
     private Medicamento medicamento;
 
-    @Column(name = "dosis", nullable = false, columnDefinition = "TEXT")
+    /** Medico que genera la formula (cabecera). */
+    @Column(name = "medico_id")
+    private Long medicoId;
+
+    /** Fecha de creacion de la formula (cabecera). */
+    @Column(name = "fecha_creacion")
+    private java.time.LocalDateTime fechaCreacion;
+
+    /** Dosis del modelo antiguo (opcional). En el modelo nuevo va en el detalle. */
+    @Column(name = "dosis", columnDefinition = "TEXT")
     private String dosis;
 
     @Column(name = "indicaciones", columnDefinition = "TEXT")

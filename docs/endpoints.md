@@ -35,3 +35,18 @@ Perfil del usuario autenticado (`/perfil`):
 
 Todos los endpoints distintos de `/auth` y de la documentacion requieren un
 token JWT valido. Consulte `seguridad.md` para el detalle del control de acceso.
+
+## Endpoints agregados en la Fase 4 (Reportes)
+
+Modulo de reportes (`/reporte`), restringido a los roles `Administrador`,
+`Contable` y `JEFE_BODEGA`:
+
+- `GET /reporte/generar?categoria=&tipo=&desde=&hasta=` : vista previa del
+  reporte en formato JSON.
+- `GET /reporte/pdf?categoria=&tipo=&desde=&hasta=` : exportacion del reporte a PDF.
+- `GET /reporte/excel?categoria=&tipo=&desde=&hasta=` : exportacion del reporte a
+  Excel (.xlsx).
+
+Las categorias disponibles son `financiero`, `inventario` y `gestion`; el
+catalogo completo de tipos de reporte por categoria se describe en
+`reportes.md`. Las fechas usan el formato aaaa-mm-dd.

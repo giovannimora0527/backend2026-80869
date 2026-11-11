@@ -38,13 +38,21 @@ Reglas vigentes:
 
 - `/usuario` : solo el rol `Administrador`.
 - `/rol` : solo el rol `Administrador`.
+- `/despacho` : roles `DESPACHO_MEDICO` y `Administrador`.
+- `/reporte` : roles `Administrador`, `Contable` y `JEFE_BODEGA`.
 
 Los menus que ve cada rol se configuran desde la pantalla de Gestion de Roles
 (ver `gestion-roles.md`), que actualiza la tabla `perfil_menu`.
 
-Este mapa de reglas se ampliara en las siguientes fases a medida que se
-incorporen modulos con restricciones de rol, por ejemplo el modulo de despacho
-para el perfil `DESPACHO_MEDICO`.
+Perfiles involucrados en estas reglas:
+
+- `Administrador`: acceso completo.
+- `DESPACHO_MEDICO`: modulo de despacho e inventario en consulta (Fase 5).
+- `Contable`: modulo de reportes y facturacion en consulta (Fase 4).
+- `JEFE_BODEGA`: modulo de reportes e inventario en consulta (Fase 4).
+
+Este mapa de reglas se amplia a medida que se incorporan modulos con
+restricciones de rol.
 
 El control de acceso se aplica en el backend y no depende de que el frontend
 oculte las opciones del menu. La ocultacion de opciones en la interfaz es una
