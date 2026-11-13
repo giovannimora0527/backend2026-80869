@@ -24,7 +24,9 @@ El script de creacion y modificacion esta en `docs/sql/fase-1-inventario.sql`.
 
 - El registro Invima es obligatorio cuando `requiere_invima` es verdadero
   (medicamentos). Para utensilios u otros productos puede quedar vacio.
-- El codigo, si se indica, debe tener exactamente 8 caracteres y es unico.
+- El codigo de 8 caracteres es obligatorio para los medicamentos (los que
+  requieren Invima) y unico. Los utensilios pueden no tenerlo, pero si lo
+  indican debe tener exactamente 8 caracteres.
 - Nombre unico por medicamento.
 - Precios y cantidades no negativos.
 - La existencia nunca es negativa (los movimientos de salida se validaran

@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"/><title>Guia 4 - Reportes y Docker</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;color:#12343b;max-width:820px;margin:40px auto;padding:0 24px;line-height:1.6;}
+h1{color:#123b3a;border-bottom:3px solid #2f8f88;padding-bottom:8px;}
+h2{color:#2f8f88;margin-top:1.8em;border-bottom:1px solid #cfe4e0;padding-bottom:4px;}
+h3{color:#123b3a;margin-top:1.2em;}
+code{background:#eef7f5;color:#2f8f88;padding:1px 5px;border-radius:4px;font-family:'Consolas',monospace;font-size:0.9em;}
+pre{background:#123b3a;color:#eef7f5;padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:0.85em;}
+pre code{background:none;color:inherit;padding:0;}
+ul{margin:0.4em 0 0.8em 0;}li{margin-bottom:0.3em;}
+hr{border:none;border-top:1px solid #cfe4e0;margin:1.6em 0;}
+@media print{body{margin:0;max-width:none;}h2{page-break-after:avoid;}pre,li{page-break-inside:avoid;}}
+</style></head><body>
+<h1>Guia de estudio 4 - Reportes y despliegue con Docker (Fase 4 y entregables)</h1>
+<p>Cubre dos temas: el modulo de reportes administrativos y contables (Fase 4) y el despliegue del sistema completo con Docker y Docker Compose (entregable obligatorio).</p>
+<hr/>
+<h1>Parte A. Modulo de reportes (Fase 4)</h1>
+<h2>1. Vision general</h2>
+<p>Consolida la informacion de la clinica en tres grupos: financieros, inventario y gestion medica. Todos permiten filtrar por fechas, mostrar vista previa y exportarse a PDF y Excel. Es un modulo de solo lectura: construye los reportes a partir de la informacion ya registrada (facturacion, inventario y citas).</p>
+<h2>2. Como esta hecho (idea tecnica)</h2>
+<p>Todos los reportes usan una misma estructura (titulo, subtitulo, columnas, filas y totales), que sirve tanto para la vista previa como para el PDF y el Excel. Asi la presentacion y la exportacion son genericas.</p>
+<h2>3. Catalogo de reportes</h2>
+<h3>Financieros</h3>
+<ul><li>Ingresos por periodo, por consultas, por venta de medicamentos, por especialidad y por veterinario.</li><li>Facturas por estado; pagos parciales con saldo; impuestos y descuentos; resumen por dia, mes y anio.</li></ul>
+<h3>Inventario</h3>
+<ul><li>Existencias; valor del inventario (costo y venta); agotados; stock minimo; proximos a vencer; vencidos; entradas y salidas.</li></ul>
+<h3>Gestion medica</h3>
+<ul><li>Citas por periodo; citas por estado; consultas por veterinario; consultas por especialidad; mascotas atendidas.</li></ul>
+<h2>4. La "foto del momento"</h2>
+<p>Hay dos tipos de reporte: <strong>por periodo</strong> (ingresos, movimientos, citas), donde la fecha cambia el resultado; y <strong>foto del momento</strong> (existencias, valor, agotados, stock minimo, por vencer, vencidos), que reflejan el estado actual y no dependen del periodo. El selector de fechas aparece siempre (lo pide el enunciado), pero en los de foto del momento se muestra deshabilitado con una nota.</p>
+<h2>5. Control de acceso</h2>
+<p>Restringido a Administrador, Contable y JEFE_BODEGA. El menu solo aparece para esos perfiles y el backend rechaza las peticiones de roles no autorizados. Perfiles nuevos: Contable (financiero) y JEFE_BODEGA (inventario).</p>
+<h2>6. Como usar el modulo</h2>
+<ul><li>Elegir pestana, tipo de reporte y rango de fechas.</li><li>"Generar": muestra la vista previa con totales.</li><li>"PDF" y "Excel": descargan el mismo reporte que se ve en pantalla.</li></ul>
+<h2>7. Flujo de prueba sugerido (reportes)</h2>
+<ul><li>Financieros: "Ingresos por periodo" y exportar a PDF y Excel.</li><li>Inventario: "Valor del inventario" (no depende de la fecha).</li><li>Gestion medica: "Citas por estado".</li><li>Entrar como Contable y como JEFE_BODEGA para mostrar el acceso restringido.</li></ul>
+<hr/>
+<h1>Parte B. Despliegue con Docker</h1>
+<h2>8. Para que sirve Docker</h2>
+<p>Empaqueta cada parte con todo lo que necesita, de modo que el sistema corre igual en cualquier equipo sin instalar Java, Maven, Node ni MySQL. Docker Compose coordina los tres contenedores: MySQL, backend (Spring Boot) y frontend (Angular + Nginx).</p>
+<h2>9. Como esta construido</h2>
+<ul>
+<li>Cada proyecto tiene un Dockerfile de dos etapas (multi-stage): una construye y otra, mas liviana, ejecuta.</li>
+<li>El <code>docker-compose.yml</code> declara los servicios, la red, el volumen de MySQL y los puertos.</li>
+<li>El backend corre con un perfil "docker" que lee la configuracion desde variables de entorno.</li>
+<li>MySQL ejecuta el dump de la base la primera vez que arranca.</li>
+</ul>
+<h2>10. Como se ejecuta</h2>
+<p>Desde la carpeta del backend, con los dos repositorios como carpetas hermanas:</p>
+<pre><code>docker compose up --build</code></pre>
+<p>Queda disponible en: Frontend <code>http://localhost:4200</code>, API <code>http://localhost:8080/clinica/v1</code>, Swagger <code>/swagger-ui.html</code>. Para detener: <code>docker compose down</code>; para borrar datos: <code>docker compose down -v</code>. El OTP del login requiere configurar el correo en un archivo <code>.env</code> (hay plantilla <code>.env.example</code>).</p>
+<h2>11. Problemas que se resolvieron</h2>
+<ul>
+<li>Referencia circular de <code>JWT_SECRET</code>: una propiedad no puede leerse a si misma; se uso la variable <code>JWT_SECRET_ENV</code>.</li>
+<li>"Public Key Retrieval is not allowed" con MySQL 8: se agrego <code>allowPublicKeyRetrieval=true</code> a la URL de conexion.</li>
+</ul>
+<h2>12. Flujo de prueba sugerido (Docker)</h2>
+<ul><li>Mostrar los dos Dockerfile y el docker-compose.yml.</li><li>Ejecutar <code>docker compose up --build</code> y mostrar los tres contenedores arriba.</li><li>Abrir el frontend e iniciar sesion; abrir Swagger.</li><li>Explicar que todo corre en contenedores, sin instalar nada mas que Docker.</li></ul>
+<h2>13. Glosario</h2>
+<ul>
+<li>Contenedor: caja aislada con una parte del sistema y todo lo que necesita.</li>
+<li>Imagen: plantilla a partir de la cual se crea un contenedor.</li>
+<li>Dockerfile: receta para construir una imagen.</li>
+<li>Docker Compose: herramienta que levanta y conecta varios contenedores.</li>
+<li>Multi-stage: construccion en etapas para una imagen final liviana.</li>
+<li>Volumen: almacenamiento persistente (los datos de MySQL sobreviven a reinicios).</li>
+</ul>
+</body></html>

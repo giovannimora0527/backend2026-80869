@@ -1,0 +1,11 @@
+# Archivos y carpetas que NO deben copiarse al contexto de construccion
+# de Docker. Reduce el tamano del contexto y acelera el build.
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+.mvn/wrapper/maven-wrapper.jar
+docs/
+README.md
+application-secrets.properties

@@ -58,3 +58,16 @@ La creacion y edicion base de citas se mantiene en el modulo `/cita` existente;
 este modulo agrega la vista de calendario, los estados, la reprogramacion, el
 historial y el reporte. La creacion de cita ahora valida que el medico este
 activo.
+
+## Nota sobre el refuerzo de reglas (correcciones)
+
+Las reglas de negocio se validan tanto al crear como al editar una cita en
+`CitaServiceImpl`, y al reprogramar desde el calendario en
+`CalendarioServiceImpl`:
+
+- Solapamiento: se usa una ventana de 30 minutos (coherente con la duracion de
+  la cita), se ignoran las citas canceladas y, al editar, se excluye la propia
+  cita para que no colisione consigo misma.
+- Medico inactivo: se valida tanto al crear como al editar.
+- Horario de disponibilidad: si el medico tiene horarios activos, la cita (nueva
+  o editada) debe caer dentro de alguno de ellos.

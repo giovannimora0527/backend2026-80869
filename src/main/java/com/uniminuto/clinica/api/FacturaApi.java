@@ -29,6 +29,10 @@ public interface FacturaApi {
     ResponseEntity<List<FacturaRs>> listarPorCliente(
             @RequestParam("clienteId") Long clienteId) throws BadRequestException;
 
+    @GetMapping(value = "/por-mascota", produces = {"application/json"})
+    ResponseEntity<List<FacturaRs>> listarPorMascota(
+            @RequestParam("mascotaId") Long mascotaId) throws BadRequestException;
+
     @GetMapping(value = "/obtener", produces = {"application/json"})
     ResponseEntity<FacturaRs> obtener(@RequestParam("id") Long id) throws BadRequestException;
 

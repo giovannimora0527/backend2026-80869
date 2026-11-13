@@ -32,6 +32,11 @@ public class FacturaApiController implements FacturaApi {
     }
 
     @Override
+    public ResponseEntity<List<FacturaRs>> listarPorMascota(Long mascotaId) throws BadRequestException {
+        return ResponseEntity.ok(this.facturaService.listarPorMascota(mascotaId));
+    }
+
+    @Override
     public ResponseEntity<FacturaRs> obtener(Long id) throws BadRequestException {
         return ResponseEntity.ok(this.facturaService.obtener(id));
     }

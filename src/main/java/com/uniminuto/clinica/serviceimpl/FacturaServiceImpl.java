@@ -106,6 +106,15 @@ public class FacturaServiceImpl implements FacturaService {
     }
 
     @Override
+    public List<FacturaRs> listarPorMascota(Long mascotaId) {
+        if (mascotaId == null) {
+            throw new BadRequestException("El identificador de la mascota es obligatorio.");
+        }
+        return facturaRepository.findByMascotaIdOrderByFechaDesc(mascotaId).stream()
+                .map(this::mapear).toList();
+    }
+
+    @Override
     public FacturaRs obtener(Long id) {
         return this.mapear(this.buscar(id));
     }

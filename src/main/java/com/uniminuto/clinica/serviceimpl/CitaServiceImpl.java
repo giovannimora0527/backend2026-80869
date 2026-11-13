@@ -2,11 +2,13 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.Cliente;
+import com.uniminuto.clinica.entity.HorarioMedico;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.models.CitaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.CitaRepository;
+import com.uniminuto.clinica.repository.HorarioMedicoRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.service.CitaService;
@@ -25,6 +27,9 @@ public class CitaServiceImpl implements CitaService {
     private static final String ESTADO_CANCELADA = "CANCELADA";
     private static final String ESTADO_CONFIRMADA = "CONFIRMADA";
 
+    /** Duracion estimada de una cita, usada para detectar solapamientos. */
+    private static final int DURACION_CITA_MINUTOS = 30;
+
     @Autowired
     private CitaRepository citaRepository;
 
@@ -33,6 +38,9 @@ public class CitaServiceImpl implements CitaService {
 
     @Autowired
     private MedicoRepository medicoRepository;
+
+    @Autowired
+    private HorarioMedicoRepository horarioRepository;
 
 
     @Override
@@ -90,19 +98,16 @@ public class CitaServiceImpl implements CitaService {
         }
 
         Cita citaActualizar = optCita.get();
-        if (!ESTADO_CANCELADA.equalsIgnoreCase(citaRq.getEstado()) && !ESTADO_CONFIRMADA.equalsIgnoreCase(citaRq.getEstado())) {
-            if (citaActualizar.getFechaHora().equals(citaRq.getFechaHora())) {
-                if (!sePuedeAgendarCitaXFecha(citaActualizar)) {
-                    throw new BadRequestException("No se puede actualizar la cita  ya que hay una cita agendada en ese rango de fechas.");
-                }
-            }
 
-            List<Cita> citas = citaRepository.findByMedicoAndFechaHoraBetween(medicoOptional.get(),
-                    citaRq.getFechaHora().minusMinutes(30), citaRq.getFechaHora().plusMinutes(30));
-            if (!citas.isEmpty()) {
-                throw new BadRequestException("No se puede actualizar la cita " +
-                        "ya que hay el médico tiene una cita agendada en ese rango de fechas.");
-            }
+        // Regla: no se pueden asignar citas a medicos inactivos (tambien al editar).
+        if (!Boolean.TRUE.equals(medicoOptional.get().getEstado())) {
+            throw new BadRequestException("No se pueden asignar citas a un medico inactivo.");
+        }
+
+        // Si la cita no se esta cancelando, validar solapamiento y horario.
+        if (!ESTADO_CANCELADA.equalsIgnoreCase(citaRq.getEstado())) {
+            this.validarSolapamiento(medicoOptional.get(), citaRq.getFechaHora(), citaActualizar.getId());
+            this.validarHorarioDisponible(medicoOptional.get(), citaRq.getFechaHora());
         }
 
         citaActualizar.setMedico(medicoOptional.get());
@@ -138,28 +143,12 @@ public class CitaServiceImpl implements CitaService {
             throw new BadRequestException("No se pueden asignar citas a un medico inactivo.");
         }
 
-        Optional<Cita> citaOptional = citaRepository.findByMascotaAndMedico(mascotaOptional.get(), medicoOptional.get());
+        // Regla: el medico no puede tener dos citas que se solapen (ventana de
+        // 30 minutos, ignorando las citas canceladas).
+        this.validarSolapamiento(medicoOptional.get(), citaRq.getFechaHora(), null);
 
-        if (citaOptional.isPresent()) {
-            // Valido las fechas de la cita para darle un tiempo de 30 minutos para que no se solapen las citas
-            Cita cita = citaOptional.get();
-            LocalDateTime fechaHoraCita = cita.getFechaHora();
-            LocalDateTime fechaHoraCitaMas30Min = fechaHoraCita.plusMinutes(15);
-            LocalDateTime fechaHoraCitaMenos30Min = fechaHoraCita.minusMinutes(15);
-            if (citaRq.getFechaHora().isAfter(fechaHoraCitaMenos30Min)
-                    && citaRq.getFechaHora().isBefore(fechaHoraCitaMas30Min)
-                    && cita.getEstado().equals(ESTADO_PROGRAMADA)) {
-                throw new BadRequestException("No se puede asignar la cita ya que tiene una cita programada en ese rango de fechas.");
-            }
-        }
-
-        List<Cita> citas = citaRepository
-                .findByMedicoAndFechaHoraBetween(medicoOptional.get(),
-                        citaRq.getFechaHora().minusMinutes(15),
-                        citaRq.getFechaHora().plusMinutes(15));
-        if (!citas.isEmpty()) {
-            throw new BadRequestException("El médico ya tiene una cita programada en ese rango de hora.");
-        }
+        // Regla: la cita debe caer dentro del horario de disponibilidad del medico.
+        this.validarHorarioDisponible(medicoOptional.get(), citaRq.getFechaHora());
 
         Mascota mascota = mascotaOptional.get();
         Medico medico = medicoOptional.get();
@@ -180,13 +169,43 @@ public class CitaServiceImpl implements CitaService {
         return rta;
     }
 
-    private boolean sePuedeAgendarCitaXFecha(Cita cita) {
-        LocalDateTime fechaHoraCita = cita.getFechaHora();
-        LocalDateTime fechaHoraCitaMas30Min = fechaHoraCita.plusMinutes(15);
-        LocalDateTime fechaHoraCitaMenos30Min = fechaHoraCita.minusMinutes(15);
-        return !cita.getFechaHora().isAfter(fechaHoraCitaMenos30Min)
-                || !cita.getFechaHora().isBefore(fechaHoraCitaMas30Min)
-                || !cita.getEstado().equals(ESTADO_PROGRAMADA);
+    /**
+     * Valida que el medico no tenga otra cita que se solape con la fecha/hora
+     * indicada (ventana de +/- la duracion de la cita). Ignora las citas
+     * canceladas y, al editar, excluye la propia cita (citaIdExcluir).
+     */
+    private void validarSolapamiento(Medico medico, LocalDateTime fechaHora, Long citaIdExcluir) {
+        LocalDateTime desde = fechaHora.minusMinutes(DURACION_CITA_MINUTOS);
+        LocalDateTime hasta = fechaHora.plusMinutes(DURACION_CITA_MINUTOS);
+        List<Cita> solapadas = citaRepository.findByMedicoAndFechaHoraBetween(medico, desde, hasta);
+        boolean hayConflicto = solapadas.stream().anyMatch(c ->
+                (citaIdExcluir == null || !c.getId().equals(citaIdExcluir))
+                        && !ESTADO_CANCELADA.equalsIgnoreCase(c.getEstado()));
+        if (hayConflicto) {
+            throw new BadRequestException(
+                    "El medico ya tiene una cita en ese rango de horario.");
+        }
+    }
+
+    /**
+     * Valida que la fecha/hora de la cita caiga dentro del horario de
+     * disponibilidad del medico. Si el medico no tiene horarios definidos, se
+     * asume disponible (no se restringe).
+     */
+    private void validarHorarioDisponible(Medico medico, LocalDateTime fechaHora) {
+        List<HorarioMedico> horarios = horarioRepository.findByMedicoIdAndActivoTrue(medico.getId());
+        if (horarios.isEmpty()) {
+            return;
+        }
+        int dia = fechaHora.getDayOfWeek().getValue();
+        boolean disponible = horarios.stream().anyMatch(h ->
+                h.getDiaSemana() == dia
+                        && !fechaHora.toLocalTime().isBefore(h.getHoraInicio())
+                        && !fechaHora.toLocalTime().isAfter(h.getHoraFin()));
+        if (!disponible) {
+            throw new BadRequestException(
+                    "El medico no atiende en el horario seleccionado.");
+        }
     }
 
     private void validarCita(CitaRq citaRq) throws BadRequestException {

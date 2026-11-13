@@ -13,5 +13,7 @@ public interface FacturaRepository extends JpaRepository<Factura, Long> {
 
     List<Factura> findByClienteIdOrderByFechaDesc(Long clienteId);
 
+    List<Factura> findByMascotaIdOrderByFechaDesc(Long mascotaId);
+
     boolean existsByCitaIdAndEstadoPagoNot(Long citaId, String estadoPago);
 }

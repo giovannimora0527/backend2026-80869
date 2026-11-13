@@ -1,0 +1,100 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"/><title>Guia general - Vision integral</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;color:#12343b;max-width:820px;margin:40px auto;padding:0 24px;line-height:1.6;}
+h1{color:#123b3a;border-bottom:3px solid #2f8f88;padding-bottom:8px;}
+h2{color:#2f8f88;margin-top:1.8em;border-bottom:1px solid #cfe4e0;padding-bottom:4px;}
+h3{color:#123b3a;margin-top:1.2em;}
+code{background:#eef7f5;color:#2f8f88;padding:1px 5px;border-radius:4px;font-family:'Consolas',monospace;font-size:0.9em;}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:0.9em;}
+th,td{border:1px solid #cfe4e0;padding:7px 10px;text-align:left;}
+th{background:#eef7f5;color:#123b3a;}
+ul{margin:0.4em 0 0.8em 0;}li{margin-bottom:0.3em;}
+hr{border:none;border-top:1px solid #cfe4e0;margin:1.6em 0;}
+@media print{body{margin:0;max-width:none;}h2{page-break-after:avoid;}table,li{page-break-inside:avoid;}}
+</style></head><body>
+<h1>Guia general - Vision integral del proyecto</h1>
+<p>Resume todo el sistema de gestion de la clinica veterinaria Clinica DDSF como una solucion integral. Las guias 1 a 4 cubren cada bloque en detalle; esta las conecta.</p>
+<hr/>
+<h2>1. Que es el sistema</h2>
+<p>Una aplicacion web Full Stack para gestionar integralmente los procesos de una clinica veterinaria: administrativos, medicos, comerciales y financieros.</p>
+<ul>
+<li>Backend: Spring Boot (Java 21), API REST documentada en Swagger.</li>
+<li>Frontend: Angular 19 (Datta Able + Bootstrap 5), con identidad de marca propia.</li>
+<li>Base de datos: MySQL.</li>
+<li>Despliegue: Docker y Docker Compose (MySQL + backend + frontend).</li>
+</ul>
+<hr/>
+<h2>2. Los modulos y como se conectan</h2>
+<ul>
+<li><strong>Inventario</strong> (Fase 1): medicamentos y productos, con lotes, precios, Invima, codigo, alertas y carga masiva.</li>
+<li><strong>Citas con calendario</strong> (Fase 2): agenda por veterinario, estados y reglas de no solapamiento.</li>
+<li><strong>Atencion, formulas y facturacion</strong> (Fase 3): atencion de la cita, formulacion y factura.</li>
+<li><strong>Reportes</strong> (Fase 4): informacion consolidada, exportable a PDF y Excel.</li>
+<li><strong>Despacho</strong> (Fase 5): entrega real de los medicamentos; unico punto donde se descuenta el inventario.</li>
+</ul>
+<p><strong>Idea que conecta todo:</strong> formular no descuenta inventario; el inventario solo se afecta cuando el despacho confirma la entrega. La facturacion toma servicios y medicamentos; los reportes leen facturas, movimientos y citas.</p>
+<hr/>
+<h2>3. Seguridad y roles</h2>
+<p>El acceso se controla por perfiles, con validacion real en el backend (un filtro revisa token y rol en cada peticion), no solo ocultando menus.</p>
+<ul>
+<li>Administrador: acceso completo.</li>
+<li>Recepcion: gestion operativa y facturacion.</li>
+<li>Medico: su calendario, atencion e historias.</li>
+<li>DESPACHO_MEDICO: inventario en consulta y despacho.</li>
+<li>Contable: reportes y facturacion en consulta.</li>
+<li>JEFE_BODEGA: reportes e inventario en consulta.</li>
+</ul>
+<hr/>
+<h2>4. Integridad de la informacion</h2>
+<ul>
+<li>No se eliminan registros fisicamente: se desactivan o anulan, conservando el historial.</li>
+<li>Las operaciones criticas (descuento en el despacho) son transaccionales.</li>
+<li>Las tarifas se conservan historicamente en la factura.</li>
+<li>Los cambios de estado y de tarifa quedan en tablas de log.</li>
+</ul>
+<hr/>
+<h2>5. Credenciales de prueba por rol</h2>
+<p>Las contrasenas reales no se publican; use las definidas en su entorno. Para las pruebas por rol se emplean alias de correo con el signo mas.</p>
+<table>
+<tr><th>Rol</th><th>Usuario sugerido</th><th>Correo de prueba (alias)</th><th>Que puede hacer</th></tr>
+<tr><td>Administrador</td><td>david</td><td>(correo real del administrador)</td><td>Todo el sistema</td></tr>
+<tr><td>Recepcion</td><td>recepcion</td><td>davidolproo+recepcion@gmail.com</td><td>Citas, clientes, mascotas, facturacion</td></tr>
+<tr><td>Medico</td><td>medico</td><td>davidolproo+medico@gmail.com</td><td>Su calendario, atencion e historias</td></tr>
+<tr><td>Despacho medico</td><td>despacho</td><td>davidolproo+despacho@gmail.com</td><td>Inventario (consulta) y despacho</td></tr>
+<tr><td>Contable</td><td>contable</td><td>davidolproo+contable@gmail.com</td><td>Reportes y facturacion (consulta)</td></tr>
+<tr><td>Jefe de bodega</td><td>bodega</td><td>davidolproo+bodega@gmail.com</td><td>Reportes e inventario (consulta)</td></tr>
+</table>
+<p>Nota: el inicio de sesion usa doble factor; el codigo llega al correo del usuario. Los usuarios deben existir en la base que esta corriendo.</p>
+<hr/>
+<h2>6. Documentacion del proyecto</h2>
+<ul>
+<li>Modelo de datos y diagrama ER: <code>docs/modelo-datos.md</code>.</li>
+<li>Scripts SQL por fase: <code>docs/sql/</code>.</li>
+<li>Seguridad: <code>docs/seguridad.md</code>. Endpoints y Swagger: <code>docs/endpoints.md</code>.</li>
+<li>Un documento por modulo (inventario, citas, atencion-facturacion, servicios, formulas, reportes, despacho, roles).</li>
+<li>Despliegue con Docker: <code>docs/docker-despliegue.md</code>. Identidad visual: <code>docs/estetica-identidad.md</code> (frontend).</li>
+<li>Guias de estudio: <code>docs/guia-estudio/</code> (guias 1 a 4 y esta general).</li>
+</ul>
+<hr/>
+<h2>7. Guion sugerido para la sustentacion</h2>
+<ul>
+<li>Levantar el sistema con <code>docker compose up --build</code> y abrir el frontend.</li>
+<li>Iniciar sesion como administrador y mostrar el menu agrupado.</li>
+<li>Inventario: catalogo, lotes y carga masiva con mas de 50 registros.</li>
+<li>Citas: calendario, crear una cita y vista del medico.</li>
+<li>Atencion y formulas: atender, formular e imprimir la formula en PDF.</li>
+<li>Facturacion: generar la factura, registrar pagos y descargar el PDF.</li>
+<li>Despacho: como DESPACHO_MEDICO, dispensar y mostrar como baja el inventario (FEFO) y el comprobante.</li>
+<li>Reportes: como Contable o Jefe de bodega, generar un reporte y exportarlo a PDF y Excel.</li>
+<li>Seguridad: mostrar que un rol no autorizado no puede acceder a un modulo.</li>
+<li>Cerrar explicando integridad (no se borra, se anula; transacciones; historicos) y el despliegue en contenedores.</li>
+</ul>
+<hr/>
+<h2>8. Mapa de las guias</h2>
+<ul>
+<li>Guia 1 - Fundamentos: base tecnica, seguridad, inventario y citas (Fases 0, 1 y 2).</li>
+<li>Guia 2 - Atencion, formulas y facturacion (Fase 3).</li>
+<li>Guia 3 - Despacho y dispensacion (Fase 5).</li>
+<li>Guia 4 - Reportes y despliegue con Docker (Fase 4 y entregables).</li>
+<li>Guia general - esta vision integral.</li>
+</ul>
+</body></html>

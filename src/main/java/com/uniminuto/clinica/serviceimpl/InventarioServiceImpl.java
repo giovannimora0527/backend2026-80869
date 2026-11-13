@@ -277,15 +277,23 @@ public class InventarioServiceImpl implements InventarioService {
         if (rq.getNombre() == null || rq.getNombre().isBlank()) {
             throw new BadRequestException("El nombre del medicamento es obligatorio.");
         }
-        if (rq.getCodigo() != null && !rq.getCodigo().isBlank()
-                && rq.getCodigo().trim().length() != 8) {
-            throw new BadRequestException("El codigo debe tener exactamente 8 caracteres.");
-        }
-        // Regla Invima: obligatorio solo cuando el producto lo requiere.
+        // Regla Invima: obligatorio solo cuando el producto lo requiere
+        // (medicamento). Los utensilios pueden no requerirlo.
         boolean requiere = rq.getRequiereInvima() != null ? rq.getRequiereInvima() : true;
         if (requiere && (rq.getRegistroInvima() == null || rq.getRegistroInvima().isBlank())) {
             throw new BadRequestException(
                     "El registro Invima es obligatorio para los medicamentos.");
+        }
+        // Regla de codigo: los medicamentos (requieren Invima) deben tener un
+        // codigo de 8 caracteres obligatorio. Los utensilios pueden no tenerlo,
+        // pero si lo indican debe ser de 8 caracteres.
+        boolean tieneCodigo = rq.getCodigo() != null && !rq.getCodigo().isBlank();
+        if (requiere && !tieneCodigo) {
+            throw new BadRequestException(
+                    "El codigo de 8 caracteres es obligatorio para los medicamentos.");
+        }
+        if (tieneCodigo && rq.getCodigo().trim().length() != 8) {
+            throw new BadRequestException("El codigo debe tener exactamente 8 caracteres.");
         }
         if (rq.getPrecioVenta() != null && rq.getPrecioVenta().signum() < 0) {
             throw new BadRequestException("El precio de venta no puede ser negativo.");

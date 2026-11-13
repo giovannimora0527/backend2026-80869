@@ -64,3 +64,12 @@ Este modulo cierra la integracion inventario - formula - dispensacion:
 - La Fase 3 permitio formular varios medicamentos sin tocar el inventario.
 - La Fase 5 descuenta el inventario al dispensar, generando los movimientos de
   salida que luego alimentan los reportes de inventario.
+
+## Nota sobre la regla de no descontar dos veces (correccion)
+
+Para garantizar que el inventario no se descuente dos veces por la misma
+formula, una formula que ya tiene un despacho vigente (no cancelado), sea
+completo o parcial, no puede volver a despacharse. Si un despacho quedo parcial
+por falta de existencias, la correccion debe hacerse mediante un procedimiento
+de reversion/cancelacion y no re-despachando la misma formula. Asi se cumple la
+regla del enunciado de no duplicar el descuento de inventario.

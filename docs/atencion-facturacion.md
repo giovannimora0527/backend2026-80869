@@ -46,6 +46,7 @@ Script: `docs/sql/fase-3d-facturacion.sql`.
 
 - `GET /factura/listar` : lista todas las facturas.
 - `GET /factura/por-cliente?clienteId=` : historial de facturacion de un cliente.
+- `GET /factura/por-mascota?mascotaId=` : historial de facturacion de una mascota.
 - `GET /factura/obtener?id=` : una factura con su detalle y estado de pago.
 - `POST /factura/generar` : genera una factura a partir de una cita y sus items.
 - `POST /factura/registrar-pago` : registra un pago y actualiza el estado.

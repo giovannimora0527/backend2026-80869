@@ -19,6 +19,9 @@ public interface FacturaService {
     /** Historial de facturacion de un cliente. */
     List<FacturaRs> listarPorCliente(Long clienteId) throws BadRequestException;
 
+    /** Historial de facturacion de una mascota. */
+    List<FacturaRs> listarPorMascota(Long mascotaId) throws BadRequestException;
+
     /** Obtiene una factura con su detalle y su estado de pago. */
     FacturaRs obtener(Long id) throws BadRequestException;
 

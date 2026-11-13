@@ -103,21 +103,25 @@ public class DespachoServiceImpl implements DespachoService {
     public List<FormulaPendienteRs> listarFormulasPendientes() {
         List<FormulaPendienteRs> resultado = new ArrayList<>();
         for (FormulaMedica formula : formulaRepository.findAllByOrderByFechaCreacionRegistroDesc()) {
-            // Se considera pendiente si no tiene un despacho ya despachado.
-            boolean yaDespachado = despachoRepository
-                    .existsByFormulaIdAndEstadoNot(formula.getId(), Despacho.ESTADO_CANCELADO)
-                    && this.tieneDespachoFinal(formula.getId());
-            if (!yaDespachado) {
+            // Una formula es pendiente si no tiene ningun despacho vigente (no
+            // cancelado). Asi una formula ya procesada (completa o parcial) no
+            // reaparece como pendiente y no se puede despachar dos veces.
+            if (!this.tieneDespachoVigente(formula.getId())) {
                 resultado.add(this.mapearFormulaPendiente(formula));
             }
         }
         return resultado;
     }
 
-    private boolean tieneDespachoFinal(Long formulaId) {
+    /**
+     * Indica si la formula ya tiene un despacho que no fue cancelado (sea
+     * completo o parcial). Se usa para impedir que se descuente el inventario
+     * dos veces por la misma formula.
+     */
+    private boolean tieneDespachoVigente(Long formulaId) {
         return despachoRepository.findAllByOrderByFechaDesc().stream()
                 .anyMatch(d -> d.getFormulaId().equals(formulaId)
-                        && Despacho.ESTADO_DESPACHADO.equals(d.getEstado()));
+                        && !Despacho.ESTADO_CANCELADO.equals(d.getEstado()));
     }
 
     @Override
@@ -139,9 +143,12 @@ public class DespachoServiceImpl implements DespachoService {
         FormulaMedica formula = formulaRepository.findById(rq.getFormulaId())
                 .orElseThrow(() -> new BadRequestException("La formula no existe."));
 
-        // Regla: no despachar dos veces una formula ya despachada por completo.
-        if (this.tieneDespachoFinal(formula.getId())) {
-            throw new BadRequestException("Esta formula ya fue despachada en su totalidad.");
+        // Regla: no descontar el inventario dos veces por la misma formula.
+        // Si ya existe un despacho vigente (completo o parcial), no se procesa
+        // de nuevo. Una correccion debe hacerse por reversion/cancelacion.
+        if (this.tieneDespachoVigente(formula.getId())) {
+            throw new BadRequestException(
+                    "Esta formula ya tiene un despacho registrado y no puede despacharse de nuevo.");
         }
 
         List<FormulaMedicamento> detallesFormula =

@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"/><title>Guia 3 - Despacho y dispensacion</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;color:#12343b;max-width:820px;margin:40px auto;padding:0 24px;line-height:1.6;}
+h1{color:#123b3a;border-bottom:3px solid #2f8f88;padding-bottom:8px;}
+h2{color:#2f8f88;margin-top:1.8em;border-bottom:1px solid #cfe4e0;padding-bottom:4px;}
+h3{color:#123b3a;margin-top:1.2em;}
+code{background:#eef7f5;color:#2f8f88;padding:1px 5px;border-radius:4px;font-family:'Consolas',monospace;font-size:0.9em;}
+pre{background:#123b3a;color:#eef7f5;padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:0.85em;}
+pre code{background:none;color:inherit;padding:0;}
+ul{margin:0.4em 0 0.8em 0;}li{margin-bottom:0.3em;}
+hr{border:none;border-top:1px solid #cfe4e0;margin:1.6em 0;}
+@media print{body{margin:0;max-width:none;}h2{page-break-after:avoid;}pre,li{page-break-inside:avoid;}}
+</style></head><body>
+<h1>Guia de estudio 3 - Despacho y dispensacion (Fase 5)</h1>
+<p>Esta guia cubre la Fase 5 del sistema: el modulo de despacho, que gestiona la entrega real de los medicamentos formulados y es el unico punto donde se descuenta el inventario.</p>
+<hr/>
+<h2>1. Vision general de la Fase 5</h2>
+<p>El objetivo es separar dos momentos que antes se confundian:</p>
+<ul>
+<li><strong>Formular</strong> (Fase 3): el veterinario prescribe medicamentos. NO afecta el inventario.</li>
+<li><strong>Dispensar</strong> (Fase 5): el personal de despacho entrega los medicamentos. Solo aqui se descuenta el inventario.</li>
+</ul>
+<p>Esta separacion garantiza que el inventario solo se afecte cuando existe una entrega efectivamente realizada. El modulo lo opera el perfil DESPACHO_MEDICO.</p>
+<hr/>
+<h2>2. El perfil DESPACHO_MEDICO</h2>
+<p>Rol con acceso restringido. Solo puede consultar el inventario (sin editar) y operar el modulo de despacho. No accede a citas, atencion, historias, creacion de formulas, facturacion, tarifas, reportes ni administracion.</p>
+<p><strong>Idea clave:</strong> la restriccion se valida en el backend (filtro de seguridad), no solo ocultando menus. Aunque se manipule la interfaz, el servidor rechaza las peticiones no autorizadas.</p>
+<hr/>
+<h2>3. Modelo de datos</h2>
+<ul>
+<li><code>despacho</code>: cabecera de la dispensacion (estado, fecha, responsable, observacion).</li>
+<li><code>despacho_detalle</code>: por medicamento, la cantidad solicitada, la entregada y el lote.</li>
+<li><code>log_despacho</code>: historial de cambios de estado, para trazabilidad.</li>
+</ul>
+<p>Se relacionan con la formula, los lotes y los movimientos de inventario existentes.</p>
+<hr/>
+<h2>4. La politica FEFO (First Expired, First Out)</h2>
+<p>Al confirmar un despacho, el sistema descuenta de los lotes empezando por el que vence primero (sin tocar los vencidos). "Primero el que expira antes." Evita que queden lotes viejos sin usar y es la forma correcta de manejar medicamentos.</p>
+<hr/>
+<h2>5. El proceso paso a paso</h2>
+<ul>
+<li>Se consultan las formulas pendientes de dispensacion.</li>
+<li>Al seleccionar una, se ven sus medicamentos con la cantidad prescrita y la existencia disponible (solo lotes vigentes).</li>
+<li>Se registra cuanto se entrega de cada medicamento.</li>
+<li>Al confirmar, de forma transaccional, el sistema descuenta los lotes (FEFO), genera un movimiento de salida por lote, guarda el detalle, actualiza el estado, registra el log y genera un comprobante PDF.</li>
+</ul>
+<p><strong>Transaccional</strong> significa que, si algo falla, no se aplica ningun descuento: o se hace todo o nada. El inventario nunca queda a medias.</p>
+<hr/>
+<h2>6. Estados del despacho</h2>
+<ul>
+<li>PENDIENTE: la formula fue generada pero aun no se procesa.</li>
+<li>EN_PREPARACION: se estan verificando medicamentos y cantidades.</li>
+<li>DESPACHO_PARCIAL: se entrego solo una parte de lo formulado.</li>
+<li>DESPACHADO: se entrego todo lo formulado.</li>
+<li>PENDIENTE_DISPONIBILIDAD: faltan existencias para entregar.</li>
+<li>CANCELADO: se cancelo mediante un procedimiento autorizado.</li>
+</ul>
+<hr/>
+<h2>7. Reglas de negocio clave</h2>
+<ul>
+<li>Solo DESPACHO_MEDICO (y el administrador) operan el modulo.</li>
+<li>El despacho no modifica las dosis ni cantidades prescritas por el medico.</li>
+<li>El inventario se descuenta solo al confirmar la dispensacion.</li>
+<li>No se dispensan medicamentos vencidos.</li>
+<li>No se entrega mas de lo disponible; si no alcanza, se permite entrega parcial.</li>
+<li>Cada salida queda ligada a un despacho y a una formula.</li>
+<li>No se descuenta dos veces por una misma dispensacion.</li>
+<li>Toda operacion registra usuario, fecha y hora.</li>
+<li>Las dispensaciones confirmadas no se eliminan; se conserva el historial.</li>
+</ul>
+<hr/>
+<h2>8. Como usar el modulo</h2>
+<h3>Pestana Pendientes</h3>
+<ul>
+<li>Lista las formulas pendientes con propietario, mascota, medico y numero de medicamentos.</li>
+<li>Boton "Preparar": abre el detalle con cada medicamento, su cantidad prescrita y la disponible. Se indica cuanto entregar y se confirma. Si se entrega menos de lo prescrito, el despacho queda parcial.</li>
+</ul>
+<h3>Pestana Historial</h3>
+<ul>
+<li>Lista los despachos realizados con fecha, estado y responsable.</li>
+<li>Boton PDF: descarga el comprobante de despacho.</li>
+</ul>
+<hr/>
+<h2>9. Flujo de prueba sugerido para la sustentacion</h2>
+<ul>
+<li>Mostrar en Inventario la existencia de un medicamento con lotes de distinta fecha de vencimiento.</li>
+<li>Entrar con DESPACHO_MEDICO y mostrar que solo ve Inventario (consulta) y Despacho.</li>
+<li>En Despacho, seleccionar una formula y confirmar la entrega.</li>
+<li>Volver a Inventario y mostrar que la existencia bajo, tomando del lote que vence antes (FEFO).</li>
+<li>Mostrar el movimiento de salida ligado a la formula.</li>
+<li>Descargar el comprobante PDF.</li>
+<li>Mostrar un caso de entrega parcial y explicar el estado.</li>
+<li>Intentar acceder a un modulo no permitido con este rol y mostrar el rechazo del servidor.</li>
+</ul>
+<hr/>
+<h2>10. Glosario</h2>
+<ul>
+<li>Dispensacion: entrega fisica de los medicamentos formulados.</li>
+<li>Despacho: registro de una dispensacion, con su estado y detalle.</li>
+<li>Lote: cantidad de un medicamento con un mismo precio y fecha de vencimiento.</li>
+<li>FEFO: politica que descuenta primero del lote que vence antes.</li>
+<li>Movimiento de salida: registro de la disminucion de inventario por una entrega.</li>
+<li>Transaccional: operacion que se aplica completa o no se aplica.</li>
+<li>DESPACHO_MEDICO: perfil que opera el modulo con acceso restringido.</li>
+</ul>
+</body></html>

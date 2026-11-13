@@ -1,0 +1,103 @@
+# ============================================================
+#  docker-compose.yml - Clinica DDSF
+#  Orquesta los tres servicios del sistema: base de datos (MySQL),
+#  backend (Spring Boot) y frontend (Angular servido con Nginx).
+# ============================================================
+#
+#  Uso:
+#    docker compose up --build
+#
+#  Estructura de carpetas esperada (los dos repos como hermanos):
+#
+#    proyecto/
+#      Backen-p/     <- este repositorio (contiene este archivo)
+#      Frontend-p/   <- repositorio del frontend
+#
+#  Si el frontend esta en otra ruta, ajuste el "context" del servicio
+#  frontend mas abajo.
+#
+#  Puertos publicados hacia su maquina:
+#    - Frontend: http://localhost:4200
+#    - Backend:  http://localhost:8080/clinica/v1  (Swagger en /swagger-ui.html)
+#    - MySQL:    localhost:3307  (3306 dentro de la red interna)
+# ============================================================
+
+services:
+  # ---------- Base de datos MySQL ----------
+  mysql:
+    image: mysql:8.0
+    container_name: clinica-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: clinica123
+      MYSQL_DATABASE: clinica
+    ports:
+      # Se publica en 3307 para no chocar con un MySQL local en 3306.
+      - "3307:3306"
+    volumes:
+      # Datos persistentes: la informacion sobrevive a reinicios.
+      - mysql_data:/var/lib/mysql
+      # Scripts que MySQL ejecuta automaticamente la PRIMERA vez que se
+      # crea la base (en orden alfabetico). Aqui va el dump de la base.
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      # El backend espera a que MySQL este realmente listo para aceptar
+      # conexiones, no solo a que el contenedor haya arrancado.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - clinica-net
+
+  # ---------- Backend Spring Boot ----------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clinica-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: clinica
+      DB_USER: root
+      DB_PASSWORD: clinica123
+      # Correo para el OTP de doble factor. Complete estos valores (por
+      # ejemplo en un archivo .env) si desea que el login envie el codigo.
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_TO: ${MAIL_TO:-}
+    ports:
+      - "8080:8080"
+    networks:
+      - clinica-net
+
+  # ---------- Frontend Angular (Nginx) ----------
+  frontend:
+    build:
+      # El frontend esta en el repositorio hermano Frontend-p.
+      context: ../Frontend-p
+      dockerfile: Dockerfile
+    container_name: clinica-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # Se publica en 4200 para conservar la URL habitual del proyecto.
+      - "4200:80"
+    networks:
+      - clinica-net
+
+networks:
+  clinica-net:
+    driver: bridge
+
+volumes:
+  mysql_data:

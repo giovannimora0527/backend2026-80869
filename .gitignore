@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Variables de entorno (Docker) ###
+# El .env real contiene credenciales y no debe subirse. La plantilla
+# .env.example si se versiona.
+.env
+!.env.example
