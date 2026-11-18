@@ -9,9 +9,9 @@
 #
 #  Estructura de carpetas esperada (los dos repos como hermanos):
 #
-#    proyecto/
-#      Backen-p/     <- este repositorio (contiene este archivo)
-#      Frontend-p/   <- repositorio del frontend
+#    ParcialProgramacionWeb/
+#      backend2026-80869/     <- este repositorio (contiene este archivo)
+#      frontend26-80869/   <- repositorio del frontend
 #
 #  Si el frontend esta en otra ruta, ajuste el "context" del servicio
 #  frontend mas abajo.
@@ -83,7 +83,7 @@ services:
   frontend:
     build:
       # El frontend esta en el repositorio hermano Frontend-p.
-      context: ../Frontend-p
+      context: ../frontend26-80869
       dockerfile: Dockerfile
     container_name: clinica-frontend
     restart: unless-stopped

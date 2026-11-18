@@ -130,6 +130,7 @@ public class MascotaServiceImpl implements MascotaService {
         nueva.setCliente(optCliente.get());
         nueva.setRaza(optRaza.get());
         nueva.setFechaRegistro(LocalDateTime.now());
+        nueva.setActivo(Boolean.TRUE);
 
         // Paso 5. Guardar la nueva mascota en la base de datos
         this.mascotaRepository.save(nueva);

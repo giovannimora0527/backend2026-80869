@@ -28,8 +28,15 @@ proyecto/
   Frontend-p/   (contiene su propio Dockerfile y nginx.conf)
 ```
 
-Si el frontend esta en otra ruta, ajuste `services.frontend.build.context` en
-`docker-compose.yml`.
+Las carpetas deben llamarse EXACTAMENTE `Backen-p` y `Frontend-p` y estar
+juntas. Si tienen otro nombre, el build fallara con
+`unable to prepare context: path "...\Frontend-p" not found`; la solucion es
+renombrarlas. Alternativamente, se puede ajustar
+`services.frontend.build.context` en `docker-compose.yml` para apuntar al nombre
+real de la carpeta del frontend.
+
+Para instrucciones paso a paso orientadas a quien solo quiere ejecutar la
+aplicacion (sin Git), ver el archivo `COMO-EJECUTAR.md` en la raiz del backend.
 
 ## Paso previo: dump de la base de datos
 
