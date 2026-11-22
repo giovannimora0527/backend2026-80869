@@ -1,4 +1,3 @@
-
 package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.AnotacionHistoria;
@@ -9,10 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface AnotacionHistoriaRepository
-        extends JpaRepository<AnotacionHistoria, Long> {
+public interface AnotacionHistoriaRepository extends JpaRepository<AnotacionHistoria, Long> {
 
-    List<AnotacionHistoria> findByHistoriaOrderByFechaDesc(
-            HistoriaMedica historia
-    );
+    List<AnotacionHistoria> findByHistoriaOrderByFechaDesc(HistoriaMedica historia);
+
+    List<AnotacionHistoria> findByHistoria(HistoriaMedica historia);
 }

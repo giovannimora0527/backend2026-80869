@@ -1,8 +1,8 @@
-
 package com.uniminuto.clinica.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,23 +10,36 @@ import java.time.LocalDateTime;
 @Data
 public class Usuario {
 
+    /** * Identificador único del usuario. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    @Column(name = "username", nullable = false, unique = true)
+    /** * Nombre de usuario. */
+    @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(name = "rol", nullable = false)
-    private String rol;
+    /** * Contraseña almacenada como hash. */
+    @Column(name = "password_hash", columnDefinition = "TEXT")
+    private String passwordHash;
 
+    /** * Rol del usuario. */
+    @ManyToOne
+    @JoinColumn(name = "rol", nullable = false)
+    private Perfil perfil;
+
+    /** * Fecha de creación del usuario. */
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
+    /** * Indica si el usuario está activo. */
     @Column(name = "activo")
     private Boolean activo;
 
-    @Column(name = "email", nullable = false)
+    /**
+     * Correo electrónico.
+     */
+    @Column(name = "email", nullable = false, length = 255)
     private String email;
 }

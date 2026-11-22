@@ -44,4 +44,13 @@ public class FormulaMedica {
 
     @Column(name = "fecha_actualizacion_registro")
     private LocalDateTime fechaActualizacionRegistro;
+
+    // El frontend del profesor lee la duración con este nombre.
+    public String getDuracion() {
+        return duracionTratamiento;
+    }
+
+    public void setDuracion(String duracion) {
+        this.duracionTratamiento = duracion;
+    }
 }

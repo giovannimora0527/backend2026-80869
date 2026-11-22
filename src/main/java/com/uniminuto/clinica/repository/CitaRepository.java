@@ -1,4 +1,3 @@
-
 package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.Cita;
@@ -43,4 +42,6 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
             LocalDateTime fechaFin,
             Long id
     );
+
+    List<Cita> findByMascotaOrderByFechaHoraDesc(Mascota mascota);
 }

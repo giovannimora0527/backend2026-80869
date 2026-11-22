@@ -9,5 +9,9 @@ import java.util.List;
 @Repository
 public interface FormulaMedicaRepository extends JpaRepository<FormulaMedica, Long> {
 
+    List<FormulaMedica> findAllByOrderByFechaCreacionRegistroAsc();
+
+    List<FormulaMedica> findByCita_IdInOrderByFechaCreacionRegistroDesc(List<Long> citaIds);
+
     List<FormulaMedica> findAllByOrderByFechaCreacionRegistroDesc();
 }

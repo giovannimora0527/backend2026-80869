@@ -1,16 +1,15 @@
-
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medico;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CitaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.service.CitaService;
-import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 @Service
 public class CitaServiceImpl implements CitaService {
@@ -54,11 +52,9 @@ public class CitaServiceImpl implements CitaService {
             LocalDateTime fechaInicio,
             LocalDateTime fechaFin
     ) throws BadRequestException {
-
         validarFechas(fechaInicio, fechaFin);
 
-        return citaRepository
-                .findByFechaHoraBetween(fechaInicio, fechaFin)
+        return citaRepository.findByFechaHoraBetween(fechaInicio, fechaFin)
                 .stream()
                 .sorted(Comparator.comparing(
                         Cita::getFechaHora,
@@ -67,11 +63,25 @@ public class CitaServiceImpl implements CitaService {
                 .toList();
     }
 
+    @Override
+    public List<Cita> listarCitasPorMascota(Integer mascotaId)
+            throws BadRequestException {
+        if (mascotaId == null || mascotaId <= 0) {
+            throw new BadRequestException(
+                    "El ID de la mascota debe ser mayor que cero."
+            );
+        }
+
+        Mascota mascota = mascotaRepository.findById(mascotaId)
+                .orElseThrow(() -> new BadRequestException("La mascota no existe."));
+
+        return citaRepository.findByMascotaOrderByFechaHoraDesc(mascota);
+    }
+
     private void validarFechas(
             LocalDateTime fechaInicio,
             LocalDateTime fechaFin
     ) throws BadRequestException {
-
         if (fechaInicio == null || fechaFin == null) {
             throw new BadRequestException(
                     "Las fechas de inicio y fin son obligatorias."
@@ -86,22 +96,14 @@ public class CitaServiceImpl implements CitaService {
     }
 
     @Override
-    public MiRespuestaRS crearCita(CitaRq citaRq)
-            throws BadRequestException {
-
+    public MiRespuestaRS crearCita(CitaRq citaRq) throws BadRequestException {
         validarCita(citaRq);
 
-        Mascota mascota = mascotaRepository
-                .findById(citaRq.getMascotaId())
-                .orElseThrow(() ->
-                        new BadRequestException("La mascota no existe.")
-                );
+        Mascota mascota = mascotaRepository.findById(citaRq.getMascotaId())
+                .orElseThrow(() -> new BadRequestException("La mascota no existe."));
 
-        Medico medico = medicoRepository
-                .findById(citaRq.getMedicoId())
-                .orElseThrow(() ->
-                        new BadRequestException("El médico no existe.")
-                );
+        Medico medico = medicoRepository.findById(citaRq.getMedicoId())
+                .orElseThrow(() -> new BadRequestException("El médico no existe."));
 
         validarHorario(mascota, medico, citaRq.getFechaHora(), null);
 
@@ -122,14 +124,11 @@ public class CitaServiceImpl implements CitaService {
                         + " " + medico.getApellidos()
                         + " el " + citaRq.getFechaHora()
         );
-
         return respuesta;
     }
 
     @Override
-    public MiRespuestaRS actualizarCita(CitaRq citaRq)
-            throws BadRequestException {
-
+    public MiRespuestaRS actualizarCita(CitaRq citaRq) throws BadRequestException {
         validarCita(citaRq);
 
         if (citaRq.getId() == null) {
@@ -138,11 +137,8 @@ public class CitaServiceImpl implements CitaService {
             );
         }
 
-        Cita citaActualizar = citaRepository
-                .findById(citaRq.getId())
-                .orElseThrow(() ->
-                        new BadRequestException("La cita no existe.")
-                );
+        Cita citaActualizar = citaRepository.findById(citaRq.getId())
+                .orElseThrow(() -> new BadRequestException("La cita no existe."));
 
         String estadoActual = normalizarEstado(citaActualizar.getEstado());
 
@@ -159,40 +155,25 @@ public class CitaServiceImpl implements CitaService {
             );
         }
 
-        Mascota mascota = mascotaRepository
-                .findById(citaRq.getMascotaId())
-                .orElseThrow(() ->
-                        new BadRequestException("La mascota no existe.")
-                );
+        Mascota mascota = mascotaRepository.findById(citaRq.getMascotaId())
+                .orElseThrow(() -> new BadRequestException("La mascota no existe."));
 
-        Medico medico = medicoRepository
-                .findById(citaRq.getMedicoId())
-                .orElseThrow(() ->
-                        new BadRequestException("El médico no existe.")
-                );
+        Medico medico = medicoRepository.findById(citaRq.getMedicoId())
+                .orElseThrow(() -> new BadRequestException("El médico no existe."));
 
-        validarHorario(
-                mascota,
-                medico,
-                citaRq.getFechaHora(),
-                citaActualizar.getId()
-        );
+        validarHorario(mascota, medico, citaRq.getFechaHora(), citaActualizar.getId());
 
         citaActualizar.setMascota(mascota);
         citaActualizar.setCliente(mascota.getCliente());
         citaActualizar.setMedico(medico);
         citaActualizar.setFechaHora(citaRq.getFechaHora());
         citaActualizar.setMotivo(citaRq.getMotivo().trim());
-
-        // En esta operación no se permite cambiar el estado libremente.
         citaRepository.save(citaActualizar);
 
         MiRespuestaRS respuesta = new MiRespuestaRS();
         respuesta.setMessage(
-                "La cita " + citaActualizar.getId()
-                        + " se actualizó correctamente."
+                "La cita " + citaActualizar.getId() + " se actualizó correctamente."
         );
-
         return respuesta;
     }
 
@@ -202,7 +183,6 @@ public class CitaServiceImpl implements CitaService {
             LocalDateTime fechaHora,
             Long idCitaExcluir
     ) throws BadRequestException {
-
         if (!fechaHora.isAfter(LocalDateTime.now())) {
             throw new BadRequestException(
                     "No se pueden programar citas en el pasado."
@@ -213,9 +193,7 @@ public class CitaServiceImpl implements CitaService {
         LocalDateTime fin = fechaHora.plusMinutes(MARGEN_MINUTOS);
 
         List<Cita> citasMascota = idCitaExcluir == null
-                ? citaRepository.findByMascotaAndFechaHoraBetween(
-                mascota, inicio, fin
-        )
+                ? citaRepository.findByMascotaAndFechaHoraBetween(mascota, inicio, fin)
                 : citaRepository.findByMascotaAndFechaHoraBetweenAndIdNot(
                 mascota, inicio, fin, idCitaExcluir
         );
@@ -230,9 +208,7 @@ public class CitaServiceImpl implements CitaService {
         }
 
         List<Cita> citasMedico = idCitaExcluir == null
-                ? citaRepository.findByMedicoAndFechaHoraBetween(
-                medico, inicio, fin
-        )
+                ? citaRepository.findByMedicoAndFechaHoraBetween(medico, inicio, fin)
                 : citaRepository.findByMedicoAndFechaHoraBetweenAndIdNot(
                 medico, inicio, fin, idCitaExcluir
         );
@@ -249,7 +225,6 @@ public class CitaServiceImpl implements CitaService {
 
     private boolean esEstadoActivo(String estado) {
         String estadoNormalizado = normalizarEstado(estado);
-
         return ESTADO_PROGRAMADA.equals(estadoNormalizado)
                 || ESTADO_PENDIENTE.equals(estadoNormalizado)
                 || ESTADO_CONFIRMADA.equals(estadoNormalizado);
@@ -259,42 +234,28 @@ public class CitaServiceImpl implements CitaService {
         if (estado == null) {
             return "";
         }
-
         return estado.trim().toUpperCase(Locale.ROOT);
     }
 
-    private void validarCita(CitaRq citaRq)
-            throws BadRequestException {
-
+    private void validarCita(CitaRq citaRq) throws BadRequestException {
         if (citaRq == null) {
-            throw new BadRequestException(
-                    "Los datos de la cita son obligatorios."
-            );
+            throw new BadRequestException("Los datos de la cita son obligatorios.");
         }
 
         if (citaRq.getFechaHora() == null) {
-            throw new BadRequestException(
-                    "La fecha y hora de la cita son obligatorias."
-            );
+            throw new BadRequestException("La fecha y hora de la cita son obligatorias.");
         }
 
         if (citaRq.getMascotaId() == null) {
-            throw new BadRequestException(
-                    "Debes seleccionar una mascota."
-            );
+            throw new BadRequestException("Debes seleccionar una mascota.");
         }
 
         if (citaRq.getMedicoId() == null) {
-            throw new BadRequestException(
-                    "Debes seleccionar un médico."
-            );
+            throw new BadRequestException("Debes seleccionar un médico.");
         }
 
-        if (citaRq.getMotivo() == null
-                || citaRq.getMotivo().isBlank()) {
-            throw new BadRequestException(
-                    "El motivo de la cita es obligatorio."
-            );
+        if (citaRq.getMotivo() == null || citaRq.getMotivo().isBlank()) {
+            throw new BadRequestException("El motivo de la cita es obligatorio.");
         }
     }
 }

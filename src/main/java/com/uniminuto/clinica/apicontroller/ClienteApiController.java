@@ -1,5 +1,6 @@
-package com.uniminuto.clinica.api;
+package com.uniminuto.clinica.apicontroller;
 
+import com.uniminuto.clinica.api.ClienteApi;
 import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.service.ClienteService;
@@ -18,5 +19,10 @@ public class ClienteApiController implements ClienteApi {
     @Override
     public ResponseEntity<List<Cliente>> listarClientes() throws BadRequestException {
         return ResponseEntity.ok(clienteService.listarClientes());
+    }
+
+    @Override
+    public ResponseEntity<Cliente> buscarClientesPorDocumento(String documento) throws BadRequestException {
+        return ResponseEntity.ok(clienteService.buscarClientesPorDocumento(documento));
     }
 }
