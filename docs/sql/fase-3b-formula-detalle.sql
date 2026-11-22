@@ -11,9 +11,10 @@
 --   prescrita y via de administracion.
 --
 -- Resumen de cambios en el modelo de datos:
---   1. Se permite que formula_medica.medicamento_id sea NULL, para que la
---      cabecera de la formula ya no dependa de un unico medicamento. Las
---      formulas antiguas conservan su valor; las nuevas usan el detalle.
+--   1. Se permite que formula_medica.medicamento_id y formula_medica.dosis sean
+--      NULL, para que la cabecera de la formula ya no dependa de un unico
+--      medicamento ni de una unica dosis. Las formulas antiguas conservan sus
+--      valores; las nuevas registran dosis por medicamento en el detalle.
 --   2. Se agrega a formula_medica la columna medico_id (quien formula) y
 --      fecha_creacion, para la cabecera.
 --   3. Se crea la tabla formula_medicamento (detalle de la formula).
@@ -36,6 +37,14 @@ SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS = 0;
 -- 1. Hacer opcional el medicamento en la cabecera de la formula.
 ALTER TABLE `formula_medica`
     MODIFY COLUMN `medicamento_id` INT(11) NULL;
+
+-- 1.1 Hacer opcional la dosis en la cabecera de la formula.
+--     En el modelo nuevo la dosis se registra por cada medicamento en la tabla
+--     de detalle (formula_medicamento). La cabecera ya no la necesita, por lo
+--     que debe permitir NULL; de lo contrario, crear una formula nueva falla
+--     con "Column 'dosis' cannot be null".
+ALTER TABLE `formula_medica`
+    MODIFY COLUMN `dosis` TEXT NULL;
 
 -- 2. Columnas de cabecera (medico que formula y fecha).
 ALTER TABLE `formula_medica`

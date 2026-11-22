@@ -9,9 +9,9 @@
 #
 #  Estructura de carpetas esperada (los dos repos como hermanos):
 #
-#    ParcialProgramacionWeb/
-#      backend2026-80869/     <- este repositorio (contiene este archivo)
-#      frontend26-80869/   <- repositorio del frontend
+#    proyecto/
+#      Backen/     <- este repositorio (contiene este archivo)
+#      Frontend/   <- repositorio del frontend
 #
 #  Si el frontend esta en otra ruta, ajuste el "context" del servicio
 #  frontend mas abajo.
@@ -74,6 +74,11 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_TO: ${MAIL_TO:-}
+    # Servidores DNS explicitos para que el contenedor pueda resolver nombres
+    # de internet (por ejemplo smtp.gmail.com) desde la red interna de Docker.
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     ports:
       - "8080:8080"
     networks:
@@ -83,7 +88,7 @@ services:
   frontend:
     build:
       # El frontend esta en el repositorio hermano Frontend-p.
-      context: ../frontend26-80869
+      context: ../Frontend26-80869
       dockerfile: Dockerfile
     container_name: clinica-frontend
     restart: unless-stopped

@@ -5,8 +5,11 @@ import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.AnotacionHistoriaRq;
+import com.uniminuto.clinica.models.AtenderCitaRq;
 import com.uniminuto.clinica.models.CambiarEstadoCitaRq;
 import com.uniminuto.clinica.models.CitaRs;
+import com.uniminuto.clinica.models.FormulaNuevaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.ReprogramarCitaRq;
 import com.uniminuto.clinica.repository.CitaRepository;
@@ -15,7 +18,9 @@ import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.security.ContextoSeguridad;
 import com.uniminuto.clinica.security.UsuarioAutenticado;
+import com.uniminuto.clinica.service.AnotacionHistoriaService;
 import com.uniminuto.clinica.service.CalendarioService;
+import com.uniminuto.clinica.service.FormulaNuevaService;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -56,15 +61,21 @@ public class CalendarioServiceImpl implements CalendarioService {
     private final MedicoRepository medicoRepository;
     private final MascotaRepository mascotaRepository;
     private final HorarioMedicoRepository horarioRepository;
+    private final AnotacionHistoriaService anotacionHistoriaService;
+    private final FormulaNuevaService formulaNuevaService;
 
     public CalendarioServiceImpl(CitaRepository citaRepository,
                                  MedicoRepository medicoRepository,
                                  MascotaRepository mascotaRepository,
-                                 HorarioMedicoRepository horarioRepository) {
+                                 HorarioMedicoRepository horarioRepository,
+                                 AnotacionHistoriaService anotacionHistoriaService,
+                                 FormulaNuevaService formulaNuevaService) {
         this.citaRepository = citaRepository;
         this.medicoRepository = medicoRepository;
         this.mascotaRepository = mascotaRepository;
         this.horarioRepository = horarioRepository;
+        this.anotacionHistoriaService = anotacionHistoriaService;
+        this.formulaNuevaService = formulaNuevaService;
     }
 
     @Override
@@ -127,6 +138,72 @@ public class CalendarioServiceImpl implements CalendarioService {
         MiRespuestaRS rta = new MiRespuestaRS();
         rta.setStatus(200);
         rta.setMessage("La cita cambio al estado " + nuevoEstado + ".");
+        return rta;
+    }
+
+    @Override
+    @Transactional
+    public MiRespuestaRS atenderCita(AtenderCitaRq rq) {
+        // Paso 1. Validaciones basicas de entrada.
+        if (rq == null || rq.getCitaId() == null) {
+            throw new BadRequestException("La cita es obligatoria para registrar la atencion.");
+        }
+        if (esVacio(rq.getDescripcion())) {
+            throw new BadRequestException("La descripcion de la atencion es obligatoria.");
+        }
+        if (esVacio(rq.getDiagnostico())) {
+            throw new BadRequestException("El diagnostico de la atencion es obligatorio.");
+        }
+        if (esVacio(rq.getObservaciones())) {
+            throw new BadRequestException("Las observaciones de la atencion son obligatorias.");
+        }
+
+        // Paso 2. Recuperar la cita y validar su estado.
+        Cita cita = this.buscarCita(rq.getCitaId());
+        if (ESTADO_CANCELADA.equals(cita.getEstado())) {
+            throw new BadRequestException("La cita esta cancelada; no se puede atender.");
+        }
+        if (ESTADO_ATENDIDA.equals(cita.getEstado()) || ESTADO_FINALIZADA.equals(cita.getEstado())) {
+            throw new BadRequestException("La cita ya fue atendida.");
+        }
+
+        // Paso 3. El medico que atiende es siempre el asignado a la cita.
+        Medico medico = cita.getMedico();
+        if (medico == null || medico.getId() == null) {
+            throw new BadRequestException("La cita no tiene un medico asignado.");
+        }
+
+        // Paso 4. Registrar la anotacion de la atencion (crea la historia de la
+        // mascota si no existe). Se reutiliza el servicio existente.
+        AnotacionHistoriaRq anotacion = new AnotacionHistoriaRq();
+        anotacion.setCitaId(cita.getId());
+        anotacion.setMedicoId(medico.getId());
+        anotacion.setDescripcion(rq.getDescripcion().trim());
+        anotacion.setDiagnostico(rq.getDiagnostico().trim());
+        anotacion.setObservaciones(rq.getObservaciones().trim());
+        this.anotacionHistoriaService.crearAnotacionHistoria(anotacion);
+
+        // Paso 5. Crear la formula medica solo si se indicaron medicamentos.
+        // Crear la formula NO descuenta inventario; eso ocurre en el despacho.
+        boolean conFormula = rq.getMedicamentos() != null && !rq.getMedicamentos().isEmpty();
+        if (conFormula) {
+            FormulaNuevaRq formula = new FormulaNuevaRq();
+            formula.setCitaId(cita.getId());
+            formula.setMedicoId(medico.getId());
+            formula.setIndicaciones(rq.getIndicaciones());
+            formula.setMedicamentos(rq.getMedicamentos());
+            this.formulaNuevaService.crear(formula);
+        }
+
+        // Paso 6. Marcar la cita como atendida (solo tras guardar todo lo anterior).
+        cita.setEstado(ESTADO_ATENDIDA);
+        citaRepository.save(cita);
+
+        MiRespuestaRS rta = new MiRespuestaRS();
+        rta.setStatus(200);
+        rta.setMessage(conFormula
+                ? "Atencion registrada. Se creo la formula medica y quedo pendiente de despacho."
+                : "Atencion registrada correctamente.");
         return rta;
     }
 
@@ -318,5 +395,9 @@ public class CalendarioServiceImpl implements CalendarioService {
 
     private String texto(String valor) {
         return valor != null ? valor : "";
+    }
+
+    private boolean esVacio(String valor) {
+        return valor == null || valor.trim().isEmpty();
     }
 }

@@ -1,6 +1,7 @@
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.AtenderCitaRq;
 import com.uniminuto.clinica.models.CambiarEstadoCitaRq;
 import com.uniminuto.clinica.models.CitaRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
@@ -36,6 +37,10 @@ public interface CalendarioApi {
 
     @PostMapping(value = "/cambiar-estado", produces = {"application/json"}, consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> cambiarEstado(@RequestBody CambiarEstadoCitaRq rq)
+            throws BadRequestException;
+
+    @PostMapping(value = "/atender-cita", produces = {"application/json"}, consumes = {"application/json"})
+    ResponseEntity<MiRespuestaRS> atenderCita(@RequestBody AtenderCitaRq rq)
             throws BadRequestException;
 
     @PostMapping(value = "/reprogramar", produces = {"application/json"}, consumes = {"application/json"})

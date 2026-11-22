@@ -2,6 +2,7 @@ package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.CalendarioApi;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.AtenderCitaRq;
 import com.uniminuto.clinica.models.CambiarEstadoCitaRq;
 import com.uniminuto.clinica.models.CitaRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
@@ -38,6 +39,12 @@ public class CalendarioApiController implements CalendarioApi {
     public ResponseEntity<MiRespuestaRS> cambiarEstado(CambiarEstadoCitaRq rq)
             throws BadRequestException {
         return ResponseEntity.ok(this.calendarioService.cambiarEstado(rq));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> atenderCita(AtenderCitaRq rq)
+            throws BadRequestException {
+        return ResponseEntity.ok(this.calendarioService.atenderCita(rq));
     }
 
     @Override

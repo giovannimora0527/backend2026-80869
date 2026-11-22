@@ -215,7 +215,7 @@ CREATE TABLE `formula_medica` (
   `cita_id` int(11) NOT NULL,
   `medico_id` int(11) DEFAULT NULL,
   `medicamento_id` int(11) DEFAULT NULL,
-  `dosis` text NOT NULL,
+  `dosis` text DEFAULT NULL,
   `indicaciones` text DEFAULT NULL,
   `fecha_creacion_registro` datetime NOT NULL,
   `fecha_actualizacion_registro` datetime DEFAULT NULL,
