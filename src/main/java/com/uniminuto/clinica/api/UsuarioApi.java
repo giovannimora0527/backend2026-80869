@@ -20,9 +20,7 @@ public interface UsuarioApi {
      * @return Lista<UsuarioRs> </>.
      * @throws BadRequestException excepcion.
      */
-    @GetMapping(value = "/listar-ordenado",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+    @GetMapping(value = "/listar-ordenado", produces = "application/json")
     ResponseEntity<List<UsuarioRs>> getUsuarios()
             throws BadRequestException;
 
