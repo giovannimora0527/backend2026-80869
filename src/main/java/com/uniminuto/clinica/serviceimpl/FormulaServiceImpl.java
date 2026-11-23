@@ -13,13 +13,23 @@ import com.uniminuto.clinica.repository.MedicamentoRepository;
 import com.uniminuto.clinica.service.FormulaService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.uniminuto.clinica.entity.FormulaMedicaDetalle;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class FormulaServiceImpl implements FormulaService {
+
+    private static final BigDecimal CANTIDAD_MAXIMA =
+            new BigDecimal("4294967295");
 
     private final FormulaMedicaRepository formulaMedicaRepository;
     private final CitaRepository citaRepository;
@@ -58,12 +68,22 @@ public class FormulaServiceImpl implements FormulaService {
             throws BadRequestException {
         validarDatos(datos);
 
+        if (datos.getCantidadPrescrita() == null) {
+            throw new BadRequestException("La cantidad prescrita es obligatoria.");
+        }
+
+        if (datos.getViaAdministracion() == null) {
+            throw new BadRequestException("La vía de administración es obligatoria.");
+        }
+
         LocalDateTime ahora = LocalDateTime.now();
+
         FormulaMedica formula = new FormulaMedica();
         formula.setFechaEmision(ahora.toLocalDate());
         formula.setFechaCreacionRegistro(ahora);
 
         aplicarDatos(formula, datos, formula.getFechaEmision());
+        formula.sincronizarPrimeraLinea();
         return formulaMedicaRepository.save(formula);
     }
 
@@ -76,7 +96,6 @@ public class FormulaServiceImpl implements FormulaService {
         FormulaMedica formula = consultarFormula(id);
         LocalDate fechaReferencia = formula.getFechaEmision();
 
-        // Algunas fórmulas antiguas solo tienen fecha de creación.
         if (fechaReferencia == null && formula.getFechaCreacionRegistro() != null) {
             fechaReferencia = formula.getFechaCreacionRegistro().toLocalDate();
         }
@@ -88,6 +107,7 @@ public class FormulaServiceImpl implements FormulaService {
         }
 
         aplicarDatos(formula, datos, fechaReferencia);
+        formula.sincronizarPrimeraLinea();
         formula.setFechaActualizacionRegistro(LocalDateTime.now());
 
         return formulaMedicaRepository.save(formula);
@@ -110,28 +130,30 @@ public class FormulaServiceImpl implements FormulaService {
         return respuestaExitosa("Fórmula médica actualizada correctamente.");
     }
 
-    private FormulaMedicaRq convertirSolicitud(FormulaRq solicitud)
-            throws BadRequestException {
+    private FormulaMedicaRq convertirSolicitud(FormulaRq solicitud) {
         if (solicitud == null) {
             throw new BadRequestException("Los datos de la fórmula son obligatorios.");
         }
 
-        // Las rutas que reciben FormulaRq requieren indicaciones.
-        if (solicitud.getIndicaciones() == null || solicitud.getIndicaciones().isBlank()) {
+        if (solicitud.getIndicaciones() == null
+                || solicitud.getIndicaciones().isBlank()) {
             throw new BadRequestException("Las indicaciones son obligatorias.");
         }
 
         FormulaMedicaRq datos = new FormulaMedicaRq();
+        datos.setId(solicitud.getId());
         datos.setCitaId(solicitud.getCitaId());
         datos.setMedicamentoId(solicitud.getMedicamentoId());
         datos.setDosis(solicitud.getDosis());
         datos.setIndicaciones(solicitud.getIndicaciones());
         datos.setFrecuencia(solicitud.getFrecuencia());
         datos.setDuracionTratamiento(solicitud.getDuracion());
+        datos.setCantidadPrescrita(solicitud.getCantidadPrescrita());
+        datos.setViaAdministracion(solicitud.getViaAdministracion());
         return datos;
     }
 
-    private void validarDatos(FormulaMedicaRq datos) throws BadRequestException {
+    private void validarDatos(FormulaMedicaRq datos) {
         if (datos == null) {
             throw new BadRequestException("Los datos de la fórmula son obligatorios.");
         }
@@ -153,10 +175,28 @@ public class FormulaServiceImpl implements FormulaService {
                     "Las indicaciones no pueden superar los 5000 caracteres."
             );
         }
+
+        BigDecimal cantidad = datos.getCantidadPrescrita();
+        if (cantidad != null && (
+                cantidad.signum() <= 0
+                        || cantidad.compareTo(CANTIDAD_MAXIMA) > 0
+                        || cantidad.stripTrailingZeros().scale() > 0
+        )) {
+            throw new BadRequestException(
+                    "La cantidad prescrita debe ser un número entero entre 1 y 4294967295."
+            );
+        }
+
+        if (datos.getViaAdministracion() != null) {
+            validarTexto(
+                    datos.getViaAdministracion().trim(),
+                    "La vía de administración",
+                    100
+            );
+        }
     }
 
-    private void validarTexto(String valor, String campo, int longitudMaxima)
-            throws BadRequestException {
+    private void validarTexto(String valor, String campo, int longitudMaxima) {
         if (valor == null || valor.isBlank()) {
             throw new BadRequestException(campo + " es obligatoria.");
         }
@@ -172,7 +212,7 @@ public class FormulaServiceImpl implements FormulaService {
             FormulaMedica formula,
             FormulaMedicaRq datos,
             LocalDate fechaEmision
-    ) throws BadRequestException {
+    ) {
         Cita cita = citaRepository.findById(datos.getCitaId())
                 .orElseThrow(() -> new BadRequestException(
                         "La cita seleccionada no existe."
@@ -199,23 +239,135 @@ public class FormulaServiceImpl implements FormulaService {
             );
         }
 
-        if (medicamento.getFechaVence() == null
-                || medicamento.getFechaVence().isBefore(fechaEmision)) {
-            throw new BadRequestException(
-                    "El medicamento debe estar vigente en la fecha de emisión."
-            );
-        }
+        boolean cambiaMedicamento = formula.getMedicamento() == null
+                || !medicamento.getId().equals(formula.getMedicamento().getId());
 
-        String indicaciones = datos.getIndicaciones();
+        if (cambiaMedicamento) {
+            if (medicamento.getTipoProducto() != Medicamento.TipoProducto.MEDICAMENTO) {
+                throw new BadRequestException("Selecciona un medicamento del inventario.");
+            }
+            if (medicamentoRepository.tieneLoteVigenteParaFormula(medicamento.getId()) == 0) {
+                throw new BadRequestException(
+                        "El medicamento seleccionado no tiene unidades en lotes vigentes."
+                );
+            }
+        }
 
         formula.setCita(cita);
         formula.setMedicamento(medicamento);
         formula.setDosis(datos.getDosis().trim());
         formula.setFrecuencia(datos.getFrecuencia().trim());
         formula.setDuracionTratamiento(datos.getDuracionTratamiento().trim());
+
+        String indicaciones = datos.getIndicaciones();
         formula.setIndicaciones(
                 indicaciones == null || indicaciones.isBlank() ? null : indicaciones.trim()
         );
+
+        if (datos.getCantidadPrescrita() != null) {
+            formula.setCantidadPrescrita(datos.getCantidadPrescrita().longValueExact());
+        }
+
+        if (datos.getViaAdministracion() != null) {
+            formula.setViaAdministracion(datos.getViaAdministracion().trim());
+        }
+    }
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Transactional
+    public FormulaMedica agregarMedicamento(
+            Long formulaId,
+            Long medicoId,
+            FormulaMedicaRq datos
+    ) {
+        if (formulaId == null || formulaId <= 0 || datos == null) {
+            throw new BadRequestException("Indica la fórmula y el medicamento.");
+        }
+
+        // Las adiciones simultáneas a una fórmula deben asignar sus líneas por turno.
+        List<FormulaMedica> encontradas = entityManager.createQuery("""
+            SELECT f FROM FormulaMedica f
+            WHERE f.id = :formulaId AND f.cita.medico.id = :medicoId
+            """, FormulaMedica.class)
+                .setParameter("formulaId", formulaId)
+                .setParameter("medicoId", medicoId)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .getResultList();
+
+        if (encontradas.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "La fórmula no pertenece a una cita de tu agenda."
+            );
+        }
+
+        FormulaMedica formula = encontradas.get(0);
+
+        // La cita se obtiene de la fórmula guardada.
+        datos.setCitaId(formula.getCita().getId());
+        validarDatos(datos);
+
+        if (datos.getCantidadPrescrita() == null) {
+            throw new BadRequestException("La cantidad prescrita es obligatoria.");
+        }
+
+        if (datos.getViaAdministracion() == null) {
+            throw new BadRequestException("La vía de administración es obligatoria.");
+        }
+
+        if (formula.getDetalles().isEmpty()) {
+            formula.sincronizarPrimeraLinea();
+        }
+
+        // Evita duplicar la misma línea si se reenvía el formulario.
+        boolean yaRegistrada = formula.getDetalles().stream().anyMatch(linea ->
+                linea.getMedicamento().getId().equals(datos.getMedicamentoId())
+                        && java.util.Objects.equals(linea.getDosis(), datos.getDosis().trim())
+                        && java.util.Objects.equals(linea.getFrecuencia(), datos.getFrecuencia().trim())
+                        && java.util.Objects.equals(
+                        linea.getDuracionTratamiento(), datos.getDuracionTratamiento().trim())
+                        && java.util.Objects.equals(
+                        linea.getCantidadPrescrita(), datos.getCantidadPrescrita().longValueExact())
+                        && java.util.Objects.equals(
+                        linea.getViaAdministracion(), datos.getViaAdministracion().trim())
+                        && java.util.Objects.equals(
+                        linea.getIndicaciones(),
+                        datos.getIndicaciones() == null || datos.getIndicaciones().isBlank()
+                                ? null : datos.getIndicaciones().trim())
+        );
+
+        if (yaRegistrada) {
+            throw new BadRequestException("Esta línea ya está registrada en la fórmula.");
+        }
+
+        // Reutiliza la validación del medicamento y sus lotes vigentes.
+        FormulaMedica temporal = new FormulaMedica();
+        LocalDate fechaReferencia = formula.getFechaEmision();
+
+        if (fechaReferencia == null && formula.getFechaCreacionRegistro() != null) {
+            fechaReferencia = formula.getFechaCreacionRegistro().toLocalDate();
+        }
+
+        if (fechaReferencia == null) {
+            throw new BadRequestException("La fórmula no tiene fecha registrada.");
+        }
+
+        aplicarDatos(temporal, datos, fechaReferencia);
+
+        FormulaMedicaDetalle linea = new FormulaMedicaDetalle();
+        linea.setMedicamento(temporal.getMedicamento());
+        linea.setDosis(temporal.getDosis());
+        linea.setFrecuencia(temporal.getFrecuencia());
+        linea.setDuracionTratamiento(temporal.getDuracionTratamiento());
+        linea.setCantidadPrescrita(temporal.getCantidadPrescrita());
+        linea.setViaAdministracion(temporal.getViaAdministracion());
+        linea.setIndicaciones(temporal.getIndicaciones());
+
+        formula.getDetalles().add(linea);
+        formula.setFechaActualizacionRegistro(LocalDateTime.now());
+
+        return formulaMedicaRepository.saveAndFlush(formula);
     }
 
     private MiRespuestaRS respuestaExitosa(String mensaje) {

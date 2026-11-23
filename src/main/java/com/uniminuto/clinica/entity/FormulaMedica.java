@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import org.hibernate.annotations.ListIndexBase;
 
 @Entity
 @Table(name = "formula_medica")
@@ -39,13 +42,45 @@ public class FormulaMedica {
     @Column(name = "duracion_tratamiento", length = 100)
     private String duracionTratamiento;
 
+    @Column(name = "cantidad_prescrita", columnDefinition = "INT UNSIGNED")
+    private Long cantidadPrescrita;
+
+    @Column(name = "via_administracion", length = 100)
+    private String viaAdministracion;
+
     @Column(name = "fecha_creacion_registro", nullable = false)
     private LocalDateTime fechaCreacionRegistro;
 
     @Column(name = "fecha_actualizacion_registro")
     private LocalDateTime fechaActualizacionRegistro;
 
-    // El frontend del profesor lee la duración con este nombre.
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "formula_medica_detalle",
+            joinColumns = @JoinColumn(name = "formula_id")
+    )
+    @OrderColumn(name = "numero_linea", nullable = false)
+    @ListIndexBase(1)
+    private List<FormulaMedicaDetalle> detalles = new ArrayList<>();
+
+    public void sincronizarPrimeraLinea() {
+        FormulaMedicaDetalle primera;
+        if (detalles.isEmpty()) {
+            primera = new FormulaMedicaDetalle();
+            detalles.add(primera);
+        } else {
+            primera = detalles.get(0);
+        }
+
+        primera.setMedicamento(medicamento);
+        primera.setDosis(dosis);
+        primera.setFrecuencia(frecuencia);
+        primera.setDuracionTratamiento(duracionTratamiento);
+        primera.setCantidadPrescrita(cantidadPrescrita);
+        primera.setViaAdministracion(viaAdministracion);
+        primera.setIndicaciones(indicaciones);
+    }
+
     public String getDuracion() {
         return duracionTratamiento;
     }

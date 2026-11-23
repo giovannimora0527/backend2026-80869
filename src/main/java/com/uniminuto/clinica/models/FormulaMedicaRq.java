@@ -2,6 +2,7 @@ package com.uniminuto.clinica.models;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -15,4 +16,6 @@ public class FormulaMedicaRq {
     private LocalDate fechaEmision;
     private String frecuencia;
     private String duracionTratamiento;
+    private BigDecimal cantidadPrescrita;
+    private String viaAdministracion;
 }

@@ -155,6 +155,25 @@ public class CitaServiceImpl implements CitaService {
             );
         }
 
+        String estadoSolicitado = normalizarEstado(citaRq.getEstado());
+
+        if (ESTADO_CANCELADA.equals(estadoSolicitado)) {
+            citaActualizar.setEstado(ESTADO_CANCELADA);
+            citaRepository.save(citaActualizar);
+
+            MiRespuestaRS respuesta = new MiRespuestaRS();
+            respuesta.setMessage("Cita cancelada. Se conservaron los datos originales.");
+            return respuesta;
+        }
+
+        if (!estadoSolicitado.isEmpty()
+                && !estadoSolicitado.equals(estadoActual)
+                && !ESTADO_CONFIRMADA.equals(estadoSolicitado)) {
+            throw new BadRequestException(
+                    "El cambio de estado solicitado no está permitido."
+            );
+        }
+
         Mascota mascota = mascotaRepository.findById(citaRq.getMascotaId())
                 .orElseThrow(() -> new BadRequestException("La mascota no existe."));
 
@@ -162,6 +181,10 @@ public class CitaServiceImpl implements CitaService {
                 .orElseThrow(() -> new BadRequestException("El médico no existe."));
 
         validarHorario(mascota, medico, citaRq.getFechaHora(), citaActualizar.getId());
+
+        if (ESTADO_CONFIRMADA.equals(estadoSolicitado)) {
+            citaActualizar.setEstado(ESTADO_CONFIRMADA);
+        }
 
         citaActualizar.setMascota(mascota);
         citaActualizar.setCliente(mascota.getCliente());
@@ -183,6 +206,10 @@ public class CitaServiceImpl implements CitaService {
             LocalDateTime fechaHora,
             Long idCitaExcluir
     ) throws BadRequestException {
+        if (!Boolean.TRUE.equals(medico.getEstado())) {
+            throw new BadRequestException("El médico seleccionado está inactivo.");
+        }
+
         if (!fechaHora.isAfter(LocalDateTime.now())) {
             throw new BadRequestException(
                     "No se pueden programar citas en el pasado."
