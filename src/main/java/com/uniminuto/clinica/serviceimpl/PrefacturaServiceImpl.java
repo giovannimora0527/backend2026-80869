@@ -15,9 +15,11 @@ import java.util.List;
 public class PrefacturaServiceImpl {
 
     private final JdbcTemplate jdbc;
+    private final ServiciosAtencionService servicios;
 
-    public PrefacturaServiceImpl(JdbcTemplate jdbc) {
+    public PrefacturaServiceImpl(JdbcTemplate jdbc, ServiciosAtencionService servicios) {
         this.jdbc = jdbc;
+        this.servicios = servicios;
     }
 
     private record Cuenta(long id, String perfil) {}
@@ -60,6 +62,7 @@ public class PrefacturaServiceImpl {
             String medico,
             String especialidad,
             TarifaAplicada tarifa,
+            List<ServiciosAtencionService.Servicio> serviciosAdicionales,
             List<MedicamentoFormulado> medicamentos,
             BigDecimal subtotalMedicamentos,
             BigDecimal ivaServicio,
@@ -153,9 +156,14 @@ public class PrefacturaServiceImpl {
                 .add(ivaServicio)
                 .add(subtotalMedicamentos);
 
+        var adicionales = servicios.guardados(citaId);
+        for (var servicio : adicionales) {
+            total = total.add(servicio.valor()).add(servicio.calcularIva());
+        }
+
         return new Prefactura(
                 cita.id(), cita.fecha(), cita.propietario(), cita.mascota(),
-                cita.medico(), cita.especialidad(), tarifa, medicamentos,
+                cita.medico(), cita.especialidad(), tarifa, adicionales, medicamentos,
                 subtotalMedicamentos, ivaServicio, total
         );
     }

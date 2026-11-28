@@ -2,6 +2,7 @@ package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.CitaApi;
 import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CitaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -76,13 +78,27 @@ public class CitaApiController implements CitaApi {
         return ResponseEntity.ok(citaService.actualizarCita(cita));
     }
 
+    @GetMapping("/{id}/servicios")
+    public List<com.uniminuto.clinica.serviceimpl.ServiciosAtencionService.Servicio> consultarServicios(
+            @PathVariable("id") Long id
+    ) {
+        return agenda.consultarServicios(autorizacion(), id);
+    }
+
+    @GetMapping("/{id}/antecedentes")
+    public List<AgendaCitasServiceImpl.Antecedente> consultarAntecedentes(
+            @PathVariable("id") Long id
+    ) {
+        return agenda.consultarAntecedentes(autorizacion(), id);
+    }
+
     @PostMapping(value = "/{id}/finalizar-atencion", consumes = "application/json")
-    public ResponseEntity<Void> finalizarAtencion(
+    public ResponseEntity<FormulaMedica> finalizarAtencion(
             @PathVariable("id") Long id,
             @RequestBody AgendaCitasServiceImpl.DatosAtencion datos
     ) {
-        agenda.finalizarAtencion(autorizacion(), id, datos);
-        return ResponseEntity.noContent().build();
+        FormulaMedica formula = agenda.finalizarAtencion(autorizacion(), id, datos);
+        return formula == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(formula);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

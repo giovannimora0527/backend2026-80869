@@ -15,10 +15,12 @@ import java.util.List;
 public class FacturaServiceImpl {
 
     private final JdbcTemplate jdbc;
+    private final ServiciosAtencionService servicios;
     private final TarifaServiceImpl tarifas;
 
-    public FacturaServiceImpl(JdbcTemplate jdbc, TarifaServiceImpl tarifas) {
+    public FacturaServiceImpl(JdbcTemplate jdbc, ServiciosAtencionService servicios, TarifaServiceImpl tarifas) {
         this.jdbc = jdbc;
+        this.servicios = servicios;
         this.tarifas = tarifas;
     }
 
@@ -147,6 +149,18 @@ public class FacturaServiceImpl {
                     consulta.vigenciaId(), consulta.valor(), consulta.iva());
         }
 
+        if (consulta != null) {
+            for (var servicio : servicios.guardados(citaId)) {
+                jdbc.update("""
+                        INSERT INTO factura_detalle
+                            (factura_id, cita_id, tipo, descripcion, tarifa_vigencia_id,
+                             cantidad, precio_unitario, porcentaje_iva)
+                        VALUES (?, ?, 'SERVICIO', ?, ?, 1, ?, ?)
+                        """, facturaId, citaId, servicio.nombre(),
+                        servicio.vigenciaId(), servicio.valor(), servicio.porcentajeIva());
+            }
+        }
+
         for (Entrega entrega : entregas) {
             jdbc.update("""
                     INSERT INTO factura_detalle
@@ -204,6 +218,32 @@ public class FacturaServiceImpl {
             BigDecimal valorIva,
             BigDecimal totalLinea
     ) {}
+    public record CitaFacturable(long id, String fecha, String mascota, String propietario) {}
+
+    @Transactional(readOnly = true)
+    public List<CitaFacturable> buscarCitasAtendidas(String autorizacion, String busqueda) {
+        tarifas.obtenerAdministrador(autorizacion);
+        String termino = busqueda == null ? "" : busqueda.strip();
+        if (termino.isEmpty() || termino.length() > 120) {
+            throw error(HttpStatus.BAD_REQUEST, "Indica un documento o nombre de mascota válido.");
+        }
+
+        return jdbc.query("""
+                SELECT c.id, DATE_FORMAT(c.fecha_hora, '%d/%m/%Y %H:%i') AS fecha,
+                       ma.nombre_mascota,
+                       CONCAT_WS(' ', cl.nombres, cl.apellidos) AS propietario
+                FROM cita c
+                JOIN mascota ma ON ma.mascota_id = c.mascota_id
+                JOIN cliente cl ON cl.cliente_id = c.cliente_id
+                WHERE c.estado = 'ATENDIDA'
+                  AND (cl.numero_documento = ? OR LOCATE(LOWER(?), LOWER(ma.nombre_mascota)) > 0)
+                ORDER BY c.fecha_hora DESC, c.id DESC
+                """, (rs, fila) -> new CitaFacturable(
+                rs.getLong("id"), rs.getString("fecha"),
+                rs.getString("nombre_mascota"), rs.getString("propietario")
+        ), termino, termino);
+    }
+
     public record FacturaHistorial(
             long facturaId,
             long citaId,
@@ -380,6 +420,9 @@ public class FacturaServiceImpl {
         if (servicioId != null) {
             sql += " AND t.id = ?";
             parametros = new Object[] { cita.fecha(), cita.especialidadId(), servicioId };
+        } else {
+            sql += " AND t.activo = 1 AND t.nombre_servicio LIKE 'Consulta %'"
+                    + " ORDER BY (t.nombre_servicio = 'Consulta general') DESC, t.id";
         }
 
         List<Tarifa> opciones = jdbc.query(sql, (rs, fila) -> new Tarifa(
@@ -393,7 +436,7 @@ public class FacturaServiceImpl {
             throw error(HttpStatus.CONFLICT,
                     "No hay tarifa aplicable para el servicio en la fecha de atención.");
         }
-        if (opciones.size() > 1) {
+        if (opciones.size() > 1 && !"Consulta general".equalsIgnoreCase(opciones.get(0).servicio())) {
             throw error(HttpStatus.CONFLICT,
                     "Hay varios servicios. Selecciona cuál se prestó.");
         }

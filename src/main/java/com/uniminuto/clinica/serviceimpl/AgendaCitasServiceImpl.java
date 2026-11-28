@@ -1,6 +1,9 @@
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Cita;
+import com.uniminuto.clinica.entity.FormulaMedica;
+import com.uniminuto.clinica.models.FormulaMedicaRq;
+import com.uniminuto.clinica.service.FormulaService;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.AnotacionHistoriaRq;
 import com.uniminuto.clinica.service.AnotacionHistoriaService;
@@ -23,17 +26,23 @@ import java.util.Locale;
 public class AgendaCitasServiceImpl {
 
     private final JdbcTemplate jdbc;
+    private final ServiciosAtencionService servicios;
     private final EntityManager entityManager;
     private final CitaService citaService;
     private final AnotacionHistoriaService anotacionHistoriaService;
 
+    private final FormulaService formulas;
+
     public AgendaCitasServiceImpl(
             JdbcTemplate jdbc,
+            ServiciosAtencionService servicios,
             EntityManager entityManager,
             CitaService citaService,
-            AnotacionHistoriaService anotacionHistoriaService
+            AnotacionHistoriaService anotacionHistoriaService, FormulaService formulas
     ) {
         this.jdbc = jdbc;
+        this.servicios = servicios;
+        this.formulas = formulas;
         this.entityManager = entityManager;
         this.citaService = citaService;
         this.anotacionHistoriaService = anotacionHistoriaService;
@@ -46,7 +55,9 @@ public class AgendaCitasServiceImpl {
             String sintomas,
             String diagnostico,
             String observaciones,
-            String recomendaciones
+            String recomendaciones,
+            FormulaMedicaRq formula,
+            List<Long> serviciosAdicionales
     ) {
     }
 
@@ -117,7 +128,7 @@ public class AgendaCitasServiceImpl {
     }
 
     @Transactional
-    public void finalizarAtencion(
+    public FormulaMedica finalizarAtencion(
             String autorizacion,
             Long citaId,
             DatosAtencion datos
@@ -183,7 +194,49 @@ public class AgendaCitasServiceImpl {
         );
 
         anotacionHistoriaService.crearAnotacionHistoria(nota);
+        servicios.guardar(citaId, acceso.medicoId(), datos.serviciosAdicionales());
         cita.setEstado("ATENDIDA");
+
+        if (datos.formula() == null) return null;
+        datos.formula().setCitaId(cita.getId());
+        return formulas.crearFormula(datos.formula());
+    }
+
+    public List<ServiciosAtencionService.Servicio> consultarServicios(String autorizacion, Long citaId) {
+        return servicios.disponibles(citaId, obtenerMedicoDeSesion(autorizacion));
+    }
+
+    public record Antecedente(
+            Long id, LocalDateTime fecha, String descripcion,
+            String diagnostico, String observaciones
+    ) {}
+
+    @Transactional(readOnly = true)
+    public List<Antecedente> consultarAntecedentes(String autorizacion, Long citaId) {
+        Long medicoId = obtenerMedicoDeSesion(autorizacion);
+        List<Long> pacientes = jdbc.queryForList("""
+                SELECT mascota_id FROM cita WHERE id = ? AND medico_id = ?
+                """, Long.class, citaId, medicoId);
+
+        if (pacientes.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "La cita no aparece en tu agenda."
+            );
+        }
+
+        return jdbc.query("""
+                SELECT a.id, a.fecha, a.descripcion, a.diagnostico, a.observaciones
+                FROM anotacion_historia a
+                JOIN historia_medica h ON h.id = a.historia_id
+                WHERE h.paciente_id = ?
+                ORDER BY a.fecha DESC, a.id DESC
+                """, (rs, fila) -> new Antecedente(
+                rs.getLong("id"),
+                rs.getObject("fecha", LocalDateTime.class),
+                rs.getString("descripcion"),
+                rs.getString("diagnostico"),
+                rs.getString("observaciones")
+        ), pacientes.get(0));
     }
 
     private String textoObligatorio(String valor, String campo) {

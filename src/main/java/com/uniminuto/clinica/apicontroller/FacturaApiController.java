@@ -37,6 +37,15 @@ public class FacturaApiController {
     ) {
         return facturas.consultarPorCita(autorizacion, citaId);
     }
+    @GetMapping("/citas-atendidas")
+    public java.util.List<FacturaServiceImpl.CitaFacturable> buscarCitasAtendidas(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false)
+            String autorizacion,
+            @RequestParam("busqueda") String busqueda
+    ) {
+        return facturas.buscarCitasAtendidas(autorizacion, busqueda);
+    }
+
     @GetMapping("/historial")
     public java.util.List<FacturaServiceImpl.FacturaHistorial> buscarHistorial(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false)
